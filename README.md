@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Riwaz Studio
 
 Premium full-stack website for a professional photo editing studio.
@@ -30,3 +31,6 @@ ADMIN_PASSWORD=change-this-password
 Frontend: `http://localhost:5173`
 
 Backend health: `http://localhost:5000/api/health`
+=======
+# RiwazStudio
+>>>>>>> b6656b354375d545980b1eca727fdf1b202fa764
