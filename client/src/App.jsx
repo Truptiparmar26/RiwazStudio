@@ -25,12 +25,11 @@ function ScrollProgress() {
 
 export default function App() {
   const location = useLocation();
-  const [light, setLight] = useState(false);
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   useEffect(() => {
-    document.body.classList.toggle('light', light);
-  }, [light]);
+    document.body.classList.remove('light');
+  }, []);
 
   useEffect(() => {
     const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
@@ -50,7 +49,7 @@ export default function App() {
     <>
       {!isAdminRoute && <ScrollProgress />}
       {!isAdminRoute && <CursorGlow />}
-      {!isAdminRoute && <Navbar light={light} setLight={setLight} />}
+      {!isAdminRoute && <Navbar />}
       <AnimatePresence mode="wait">
         <motion.main
           key={location.pathname}

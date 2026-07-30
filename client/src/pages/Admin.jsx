@@ -5,6 +5,8 @@ import {
   FiBell,
   FiChevronRight,
   FiEdit3,
+  FiEye,
+  FiEyeOff,
   FiFileText,
   FiGrid,
   FiHome,
@@ -108,6 +110,7 @@ export default function Admin() {
   const [token, setToken] = useState(localStorage.getItem('riwaz_token') || '');
   const [email, setEmail] = useState('admin@riwazstudio.com');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
   const [records, setRecords] = useState(() =>
@@ -200,22 +203,115 @@ export default function Admin() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#f3f5fb] text-[#20243a]">
-        <div className="grid min-h-screen place-items-center p-6">
-          <motion.form
-            onSubmit={login}
-            className="w-full max-w-md rounded-[8px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgba(15,23,42,.12)]"
-            initial={{ opacity: 0, y: 26, rotateX: -8 }}
-            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+      <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-[#eff3f9] via-[#e6edf6] to-[#dde6f3] text-[#1e243a]">
+        {/* Ambient background accent decor */}
+        <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-blue-500/10 blur-[100px]" />
+        <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-amber-400/15 blur-[90px]" />
+        <div className="pointer-events-none absolute top-1/2 left-2/3 h-64 w-64 -translate-y-1/2 rounded-full bg-indigo-500/10 blur-[80px]" />
+
+        <div className="relative z-10 grid min-h-screen place-items-center px-4 py-12">
+          <motion.div
+            className="w-full max-w-md rounded-[28px] border border-white bg-white/95 p-8 shadow-[0_30px_90px_rgba(15,23,42,0.12),0_0_1px_rgba(0,0,0,0.1)] backdrop-blur-xl sm:p-10"
+            initial={{ opacity: 0, y: 25, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <div className="grid h-14 w-14 place-items-center rounded-[8px] bg-[#151331] text-2xl text-white"><FiLock /></div>
-            <h1 className="mt-6 text-3xl font-extrabold">Riwaz Admin</h1>
-            <p className="mt-2 text-sm text-slate-500">Hidden dashboard route for website management.</p>
-            <input value={email} onChange={(event) => setEmail(event.target.value)} className="mt-6 w-full rounded-[8px] border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="Email" />
-            <input value={password} onChange={(event) => setPassword(event.target.value)} className="mt-3 w-full rounded-[8px] border border-slate-200 px-4 py-3 outline-none focus:border-blue-500" placeholder="Password" type="password" />
-            <button className="mt-5 w-full rounded-[8px] bg-[#246bfe] px-5 py-3 font-extrabold text-white shadow-lg shadow-blue-500/20">Enter Dashboard</button>
-            {notice && <p className="mt-4 rounded-[8px] bg-amber-50 p-3 text-sm text-amber-700">{notice}</p>}
-          </motion.form>
+            {/* Header section in elegant white theme */}
+            <div className="flex flex-col items-center text-center">
+              <motion.div 
+                className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#12172b] to-[#1f2847] text-2xl text-[#f4d690] shadow-[0_12px_25px_rgba(18,23,43,0.3)]"
+                whileHover={{ scale: 1.06, rotate: 6 }}
+              >
+                <FiLock className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+                <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+              </motion.div>
+
+              <div className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-widest text-blue-700 shadow-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+                <span>Executive Admin Portal</span>
+              </div>
+
+              <h1 className="mt-4 text-3xl font-black tracking-tight text-[#111729]">
+                Riwaz Studio
+              </h1>
+              <p className="mt-1.5 text-xs font-semibold text-slate-500">
+                Secure executive sign-in for website & portfolio management.
+              </p>
+            </div>
+
+            {/* Clean White Form with Eye Icon */}
+            <form onSubmit={login} className="mt-8 space-y-5">
+              <div>
+                <label className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                  Admin Email Address
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-4 text-lg text-slate-400">
+                    <FiMail />
+                  </span>
+                  <input
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-[#f9fbff] py-3.5 pl-12 pr-4 text-sm font-bold text-slate-800 placeholder-slate-400 transition-all duration-200 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                    placeholder="name@riwazstudio.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                  Security Password
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-4 text-lg text-slate-400">
+                    <FiLock />
+                  </span>
+                  <input
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-[#f9fbff] py-3.5 pl-12 pr-12 text-sm font-bold text-slate-800 placeholder-slate-400 transition-all duration-200 outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/15"
+                    placeholder="Enter admin password..."
+                    type={showPassword ? 'text' : 'password'}
+                  />
+                  {/* Eye Toggle Button ("aankh vala") */}
+                  <button
+                    type="button"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition duration-200 focus:outline-none"
+                  >
+                    {showPassword ? <FiEyeOff className="text-lg" /> : <FiEye className="text-lg" />}
+                  </button>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98, y: 0 }}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2054f4] via-[#2f66ff] to-[#4578ff] py-4 text-sm font-black uppercase tracking-wider text-white shadow-[0_10px_25px_rgba(32,84,244,0.35)] transition-all duration-300 hover:shadow-[0_15px_35px_rgba(32,84,244,0.45)]"
+              >
+                <span>Enter Dashboard</span>
+              </motion.button>
+            </form>
+
+            {/* Notice & Preview access in white theme */}
+            {notice ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 8 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-center text-xs font-extrabold text-amber-800 shadow-sm"
+              >
+                {notice}
+              </motion.div>
+            ) : (
+              <div className="mt-7 flex flex-col items-center justify-center border-t border-slate-100 pt-5 text-center">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Default Demo Credentials</span>
+                <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600 shadow-sm">
+                  Pass: <code className="text-blue-600 font-mono font-black">RiwazStudioo</code>
+                </span>
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
     );

@@ -33,54 +33,6 @@ export default function Services() {
 
   return (
     <>
-      <style>{`
-        .section-3d { perspective: 1400px; transform-style: preserve-3d; }
-        .depth-layer { transform-style: preserve-3d; }
-
-        .headline-3d-glow {
-          text-shadow: 0 0 80px rgba(199,168,80,0.08), 0 0 160px rgba(199,168,80,0.03);
-        }
-
-        .hero-slider-3d {
-          transform: rotateY(-6deg) rotateX(4deg) translateZ(40px);
-          transform-style: preserve-3d;
-          transition: transform 1s cubic-bezier(0.23,1,0.32,1),
-                      box-shadow 1s cubic-bezier(0.23,1,0.32,1);
-          box-shadow:
-            -25px 25px 70px rgba(0,0,0,0.45),
-            0 0 100px rgba(199,168,80,0.04);
-        }
-        .hero-slider-3d:hover {
-          transform: rotateY(0deg) rotateX(0deg) translateZ(60px);
-          box-shadow:
-            0 35px 90px rgba(0,0,0,0.5),
-            0 0 120px rgba(199,168,80,0.08);
-        }
-
-        .floating {
-          animation: float-3d 7s ease-in-out infinite;
-        }
-        @keyframes float-3d {
-          0%, 100% { transform: rotateY(-6deg) rotateX(4deg) translateZ(40px) translateY(0); }
-          50% { transform: rotateY(-4deg) rotateX(5deg) translateZ(50px) translateY(-12px); }
-        }
-        .floating:hover { animation-play-state: paused; }
-
-        @keyframes pulse-glow-3d {
-          0%, 100% { box-shadow: -25px 25px 70px rgba(0,0,0,0.45), 0 0 40px rgba(199,168,80,0.04); }
-          50% { box-shadow: -25px 25px 70px rgba(0,0,0,0.45), 0 0 70px rgba(199,168,80,0.1), 0 0 120px rgba(199,168,80,0.03); }
-        }
-        .pulse-glow { animation: pulse-glow-3d 5s ease-in-out infinite; }
-        .pulse-glow:hover { animation: none; }
-
-        .service-card-3d {
-          transition: all 0.7s cubic-bezier(0.23,1,0.32,1);
-        }
-        .service-card-3d:hover {
-          transform: perspective(900px) rotateX(-3deg) translateY(-8px) translateZ(20px);
-        }
-      `}</style>
-
       <section className="section pt-36 section-3d">
         <div className="container depth-layer">
           <Reveal>
