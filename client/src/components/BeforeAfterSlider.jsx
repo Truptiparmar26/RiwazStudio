@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { FiArrowLeft, FiArrowRight, FiSliders } from 'react-icons/fi';
 
 export default function BeforeAfterSlider({
-  before = 'https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=1200&q=80',
-  after = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=95',
+  before = 'https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=900&q=78&fm=webp',
+  after = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=78&fm=webp',
   beforeLabel = 'Original Raw',
   afterLabel = 'Riwaz Studio Polish'
 }) {

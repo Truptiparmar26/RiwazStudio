@@ -7,11 +7,15 @@ import { getPagination, getPagingData } from '../utils/pagination.js';
 export async function createContact(req, res, next) {
   try {
     const contact = await Contact.create(req.body);
-    await sendEmail({
-      to: process.env.NOTIFY_EMAIL,
-      subject: `New Riwaz Studio inquiry: ${contact.subject}`,
-      text: `${contact.name}\n${contact.phone}\n${contact.email}\n\n${contact.message}`
-    });
+    try {
+      await sendEmail({
+        to: process.env.NOTIFY_EMAIL || 'admin@riwazstudio.com',
+        subject: `New Riwaz Studio inquiry: ${contact.subject || 'Website Inquiry'}`,
+        text: `${contact.name}\n${contact.phone || 'No phone'}\n${contact.email}\n\n${contact.message}`
+      });
+    } catch {
+      // SMTP sending failure should not prevent message storage
+    }
     return ApiResponse.created(res, 'Message received', { contact });
   } catch (error) {
     next(error);

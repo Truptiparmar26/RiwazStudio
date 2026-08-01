@@ -25,13 +25,11 @@ export default function Footer() {
       <div className="container relative grid gap-12 md:grid-cols-[1.5fr_1fr_1.2fr] lg:gap-16">
         {/* Studio Identity */}
         <div>
-          <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-full border border-champagne bg-champagne/15 font-display text-2xl font-extrabold text-champagne shadow-[0_0_25px_rgba(244,214,144,0.4)]">
-              R
-            </span>
-            <span className="font-display text-3xl font-bold tracking-tight text-white">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display text-3xl font-extrabold tracking-tight text-white md:text-4xl">
               Riwaz Studio
             </span>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-champagne shadow-[0_0_12px_rgba(244,214,144,0.8)]" />
           </div>
           <p className="mt-5 max-w-md text-sm leading-8 text-white/70">
             A world-class retouching atelier crafting emotive color grading, high-end magazine restoration, and flawless visual storytelling for elite photographers, studios, and luxury brands worldwide.
@@ -111,7 +109,7 @@ export default function Footer() {
           {/* Social Icons */}
           <div className="mt-8 flex items-center gap-3.5">
             <a
-              href="https://www.instagram.com/your_instagram_username"
+              href="https://www.instagram.com/riwazstudio_?igsh=bWRzdzFmZG1hczFy"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -131,7 +129,7 @@ export default function Footer() {
             </a>
 
             <a
-              href="mailto:riwazstudio@gmail.com"
+              href="mailto:riwazstudioofficial@gmail.com"
               aria-label="Email Us"
               className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
             >

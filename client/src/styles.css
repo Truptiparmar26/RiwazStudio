@@ -399,4 +399,31 @@ body.light .subhead {
   }
 }
 
+/* Luxury Skeleton Shimmer and Preloading Utilities */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.luxury-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(25, 26, 32, 0.85) 0%,
+    rgba(40, 42, 52, 0.95) 45%,
+    rgba(244, 214, 144, 0.15) 50%,
+    rgba(40, 42, 52, 0.95) 55%,
+    rgba(25, 26, 32, 0.85) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2.2s ease-in-out infinite;
+}
+
+.preloader-glow {
+  filter: drop-shadow(0 0 25px rgba(244, 214, 144, 0.45));
+}
+
 

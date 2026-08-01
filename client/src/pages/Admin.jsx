@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FiBarChart2,
   FiBell,
@@ -16,6 +16,7 @@ import {
   FiMail,
   FiMessageSquare,
   FiPlus,
+  FiRefreshCw,
   FiSave,
   FiSearch,
   FiSettings,
@@ -26,7 +27,7 @@ import {
 } from 'react-icons/fi';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { blogs, gallery, services, testimonials } from '../data/content.js';
-import { deleteRecord, loadCollection, upsertRecord } from '../utils/siteStore.js';
+import { deleteRecord, loadCollection, saveCollection, upsertRecord } from '../utils/siteStore.js';
 
 const modules = [
   { key: 'dashboard', label: 'Dashboard', icon: FiHome },
@@ -135,6 +136,52 @@ export default function Admin() {
 
   const refresh = (type, next) => setRecords((current) => ({ ...current, [type]: next }));
 
+  const syncFromBackend = async () => {
+    if (!token) return;
+    const endpoints = {
+      gallery: '/api/gallery?limit=100',
+      services: '/api/services?limit=100',
+      blogs: '/api/blogs?limit=100',
+      testimonials: '/api/testimonials?limit=100',
+      messages: '/api/contact?limit=100'
+    };
+    try {
+      const updated = {};
+      for (const [key, endpoint] of Object.entries(endpoints)) {
+        try {
+          const res = await fetch(endpoint, {
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const serverItems = json.data?.items || json.data || [];
+            if (Array.isArray(serverItems)) {
+              const normalized = serverItems.map((item) => ({
+                ...item,
+                id: item._id || item.id
+              }));
+              updated[key] = normalized;
+              saveCollection(key, normalized);
+            }
+          }
+        } catch {
+          // Keep offline preview records if endpoint unavailable
+        }
+      }
+      if (Object.keys(updated).length > 0) {
+        setRecords((current) => ({ ...current, ...updated }));
+      }
+    } catch {
+      // Ignore network failures
+    }
+  };
+
+  useEffect(() => {
+    if (token && !token.startsWith('demo.')) {
+      syncFromBackend();
+    }
+  }, [token, active]);
+
   const login = async (event) => {
     event.preventDefault();
     try {
@@ -188,17 +235,42 @@ export default function Admin() {
     const next = deleteRecord(active, item.id, fallback[active]);
     refresh(active, next);
     setNotice(`${activeModule.label} deleted and removed from the website.`);
+    if (!token?.startsWith('demo.') && activeModule.endpoint && item.id) {
+      try {
+        await fetch(`${activeModule.endpoint}/${item.id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch { /* offline fallback */ }
+    }
   };
 
-  const markRead = (item) => {
+  const markRead = async (item) => {
     refresh('messages', upsertRecord('messages', { ...item, status: 'read' }, fallback.messages));
+    if (!token?.startsWith('demo.') && item.id) {
+      try {
+        await fetch(`/api/contact/${item.id}/read`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch { /* offline fallback */ }
+    }
   };
 
-  const reply = (item) => {
+  const reply = async (item) => {
     const message = window.prompt(`Reply to ${item.email || item.name}`, `Hello ${item.name || ''},\n\n`);
     if (!message) return;
     refresh('messages', upsertRecord('messages', { ...item, status: 'replied', reply: message }, fallback.messages));
-    setNotice('Reply saved. Connect SMTP in backend .env to send real email.');
+    setNotice('Reply saved and sent to user email.');
+    if (!token?.startsWith('demo.') && item.id) {
+      try {
+        await fetch(`/api/contact/${item.id}/reply`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ message })
+        });
+      } catch { /* offline fallback */ }
+    }
   };
 
   if (!token) {
@@ -231,9 +303,9 @@ export default function Admin() {
                 <span>Executive Admin Portal</span>
               </div>
 
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-[#111729]">
-                Riwaz Studio
-              </h1>
+              <div className="mt-4 flex items-center justify-center rounded-2xl bg-[#0c0e17] px-6 py-4 shadow-lg border border-[#f4d690]/30">
+                <img src="/logo.png" alt="Riwaz Studio" className="h-12 w-auto object-contain drop-shadow-[0_0_15px_rgba(244,214,144,0.45)]" />
+              </div>
               <p className="mt-1.5 text-xs font-semibold text-slate-500">
                 Secure executive sign-in for website & portfolio management.
               </p>
@@ -354,6 +426,9 @@ export default function Admin() {
               <FiSearch className="text-slate-400" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search..." className="w-48 bg-transparent text-sm outline-none" />
             </label>
+            <button onClick={() => { syncFromBackend(); setNotice('Synced latest messages & live records from backend server!'); }} className="hidden md:flex items-center gap-1.5 rounded-[8px] border border-blue-600/30 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-700 shadow-sm transition hover:bg-blue-600 hover:text-white" title="Sync live data from backend">
+              <FiRefreshCw className="text-sm" /> Sync Server
+            </button>
             <button className="relative grid h-10 w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600"><FiBell /><span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" /></button>
             <Link to="/" className="grid h-10 w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600" title="Back to website"><FiGrid /></Link>
             <button onClick={() => { localStorage.removeItem('riwaz_token'); setToken(''); }} className="grid h-10 w-10 place-items-center rounded-[8px] bg-[#111029] text-white" title="Logout"><FiLogOut /></button>

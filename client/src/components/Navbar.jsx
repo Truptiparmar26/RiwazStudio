@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -19,10 +19,18 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
+  // Ultra-smooth physics-driven scroll tracking (avoids state re-render lag)
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 25,
+    restDelta: 0.001
+  });
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     onScroll();
-    window.addEventListener('scroll', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -36,13 +44,13 @@ export default function Navbar() {
             to={to}
             onClick={() => setOpen(false)}
             className={`relative rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 ${
-              isActive ? 'text-champagne drop-shadow-[0_0_10px_rgba(244,214,144,0.5)]' : 'text-white/75 hover:text-white'
+              isActive ? 'text-champagne font-extrabold drop-shadow-[0_0_12px_rgba(244,214,144,0.7)]' : 'text-slate-300 hover:text-white hover:scale-105'
             }`}
           >
             {isActive && (
               <motion.span
                 layoutId="active-nav-pill"
-                className="absolute inset-0 -z-10 rounded-full border border-champagne/45 bg-champagne/15 shadow-[0_0_20px_rgba(244,214,144,0.25)] backdrop-blur-md"
+                className="absolute inset-0 -z-10 rounded-full border border-champagne/60 bg-gradient-to-r from-champagne/30 via-amber-500/20 to-champagne/25 shadow-[0_0_25px_rgba(244,214,144,0.45)] backdrop-blur-md"
                 transition={{ type: 'spring', stiffness: 380, damping: 28 }}
               />
             )}
@@ -54,18 +62,28 @@ export default function Navbar() {
   );
 
   return (
-    <header className={`fixed left-0 right-0 top-0 z-[70] transition-all duration-500 ${scrolled ? 'py-2.5' : 'py-5'}`}>
-      <div
-        className={`container flex items-center justify-between rounded-full px-5 py-3 transition-all duration-500 ${
-          scrolled
-            ? 'glass border-champagne/20 shadow-[0_20px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl'
-            : 'bg-transparent border border-transparent'
-        }`}
-      >
-        <NavLink to="/" className="group flex items-center gap-3.5 transition duration-300 hover:scale-[1.02]">
-          <span className="grid h-11 w-11 place-items-center rounded-full border border-champagne/50 bg-gradient-to-br from-champagne/25 to-champagne/5 font-display text-xl font-extrabold text-champagne shadow-[0_0_20px_rgba(244,214,144,0.3)] transition duration-500 group-hover:rotate-12 group-hover:shadow-[0_0_30px_rgba(244,214,144,0.6)]">
-            R
-          </span>
+    <header
+      className={`fixed left-0 right-0 top-0 z-[70] transition-all duration-500 ${
+        scrolled
+          ? 'bg-[#05080e]/95 border-b border-white/15 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-2xl'
+          : 'bg-transparent py-5 pointer-events-none'
+      }`}
+    >
+      {/* Ultra-Smooth Spring-Animated Scroll Progress Bar at VERY TOP edge */}
+      <div className="absolute top-0 left-0 right-0 h-[2.5px] w-full bg-transparent pointer-events-none z-[80]">
+        <motion.div
+          className="h-full w-full origin-left bg-gradient-to-r from-[#e5b85f] via-champagne to-[#fae5ac] shadow-[0_0_16px_rgba(244,214,144,0.95)]"
+          style={{ scaleX }}
+        />
+      </div>
+
+      <div className="container pointer-events-auto flex items-center justify-between gap-4">
+        {/* Separated Independent Logo Block */}
+        <NavLink
+          to="/"
+          className="group flex shrink-0 items-center gap-3.5 transition-all duration-300 hover:scale-[1.02] hover:opacity-95"
+        >
+          <img src="/logo.png" alt="RS" className="h-11 w-11 rounded-full object-cover shadow-[0_0_20px_rgba(244,214,144,0.4)] transition duration-500 group-hover:scale-105 group-hover:shadow-[0_0_30px_rgba(244,214,144,0.7)]" />
           <span>
             <span className="block font-display text-xl font-bold leading-none tracking-tight text-white transition group-hover:text-champagne">
               Riwaz Studio
@@ -76,8 +94,12 @@ export default function Navbar() {
           </span>
         </NavLink>
         
-        <nav className="hidden items-center gap-1.5 lg:flex">{navLinks}</nav>
+        {/* Separated Standalone Floating Pill Navigation Bar */}
+        <nav className="hidden lg:flex items-center gap-1 rounded-full border border-white/15 bg-[#0c111c]/95 px-3.5 py-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85),0_0_30px_rgba(244,214,144,0.12)] backdrop-blur-2xl transition-all duration-500 hover:border-champagne/35">
+          {navLinks}
+        </nav>
 
+        {/* Mobile menu triggers */}
         <div className="flex items-center gap-2.5 lg:hidden">
           <motion.button
             type="button"
@@ -86,7 +108,7 @@ export default function Navbar() {
             onClick={() => setOpen(true)}
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.94 }}
-            className="grid h-11 w-11 place-items-center rounded-full border border-white/15 bg-white/5 text-white transition hover:border-champagne hover:text-champagne"
+            className="grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-[#0c111c]/95 text-white shadow-[0_10px_25px_rgba(0,0,0,0.7)] backdrop-blur-xl transition hover:border-champagne hover:text-champagne"
           >
             <FiMenu className="text-xl" />
           </motion.button>
@@ -103,7 +125,10 @@ export default function Navbar() {
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             <div className="flex items-center justify-between">
-              <span className="font-display text-2xl font-extrabold text-champagne">Riwaz Studio</span>
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="RS" className="h-9 w-9 rounded-full object-cover shadow-[0_0_12px_rgba(244,214,144,0.4)]" />
+                <span className="font-display text-2xl font-extrabold text-champagne">Riwaz Studio</span>
+              </div>
               <button
                 type="button"
                 aria-label="Close menu"

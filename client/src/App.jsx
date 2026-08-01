@@ -5,6 +5,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import CursorGlow from './components/CursorGlow.jsx';
 import Footer from './components/Footer.jsx';
 import Navbar from './components/Navbar.jsx';
+import Preloader from './components/Preloader.jsx';
 import WhatsAppButton from './components/WhatsAppButton.jsx';
 import About from './pages/About.jsx';
 import Admin from './pages/Admin.jsx';
@@ -47,6 +48,7 @@ export default function App() {
 
   return (
     <>
+      {!isAdminRoute && <Preloader />}
       {!isAdminRoute && <ScrollProgress />}
       {!isAdminRoute && <CursorGlow />}
       {!isAdminRoute && <Navbar />}

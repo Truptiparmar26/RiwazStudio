@@ -4,9 +4,9 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 const frames = [
-  'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=700&q=80',
-  'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=700&q=80',
-  'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=700&q=80'
+  'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=76&fm=webp',
+  'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=76&fm=webp',
+  'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=600&q=76&fm=webp'
 ];
 
 function PhotoFrame({ url, position, rotation, scale = 1, floatSpeed = 1.4 }) {

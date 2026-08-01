@@ -17,7 +17,20 @@ export const upload = multer({
 
 export async function uploadToCloudinary(file, folder = 'riwaz-studio') {
   if (!file) return undefined;
-  const optimized = await sharp(file.buffer).rotate().resize({ width: 2200, withoutEnlargement: true }).webp({ quality: 84 }).toBuffer();
+  let optimized = await sharp(file.buffer)
+    .rotate()
+    .resize({ width: 1280, withoutEnlargement: true })
+    .webp({ quality: 78, effort: 6, smartSubsample: true })
+    .toBuffer();
+
+  // Ensure image filesize strictly stays well within small KBs while preserving high studio clarity
+  if (optimized.length > 250 * 1024) {
+    optimized = await sharp(file.buffer)
+      .rotate()
+      .resize({ width: 1080, withoutEnlargement: true })
+      .webp({ quality: 72, effort: 6, smartSubsample: true })
+      .toBuffer();
+  }
 
   if (!hasCloudinaryConfig()) {
     return { url: `local-preview://${uuid()}-${file.originalname}`, publicId: null };

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiMaximize2, FiSearch, FiX } from 'react-icons/fi';
+import PreloadedImage from '../components/PreloadedImage.jsx';
 import Reveal from '../components/Reveal.jsx';
 import { categories, gallery } from '../data/content.js';
 import { useStoredCollection } from '../utils/siteStore.js';
@@ -21,6 +22,17 @@ export default function Gallery() {
     return items;
   }, [category, search, galleryItems]);
 
+  // Active Background Preloading Effect for seamless gallery switching & lightbox views
+  useEffect(() => {
+    filtered.forEach((item) => {
+      const imageUrl = item.image || item.url;
+      if (imageUrl) {
+        const img = new Image();
+        img.src = imageUrl;
+      }
+    });
+  }, [filtered]);
+
   return (
     <div className="min-h-screen pb-32 pt-36 overflow-hidden">
       {/* Ambient background glows */}
@@ -31,9 +43,15 @@ export default function Gallery() {
         <div className="container">
           <Reveal className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-champagne animate-pulse" />
-                <p className="eyebrow">Visual Archive & Portfolio</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-champagne animate-pulse" />
+                  <p className="eyebrow">Visual Archive & Portfolio</p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne/40 bg-champagne/10 px-3 py-0.5 text-[0.68rem] font-bold text-champagne uppercase tracking-wider shadow-[0_0_15px_rgba(244,214,144,0.15)]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-champagne animate-ping" />
+                  HD Preloading Active
+                </span>
               </div>
               <h1 className="headline mt-4 headline-3d-glow">Luxury edit archive.</h1>
             </div>
@@ -95,10 +113,11 @@ export default function Gallery() {
                   onClick={() => setSelected(item)}
                 >
                   <div className="relative overflow-hidden bg-charcoal">
-                    <img
+                    <PreloadedImage
                       src={item.image || item.url}
                       alt={item.title}
-                      loading="lazy"
+                      priority={index < 6}
+                      containerClassName="min-h-[260px] w-full"
                       className="image-protect h-auto w-full object-cover transition duration-700 ease-out group-hover:scale-110 group-hover:rotate-1 filter brightness-95 group-hover:brightness-105"
                       onContextMenu={(event) => event.preventDefault()}
                     />
@@ -159,9 +178,11 @@ export default function Gallery() {
                 <FiX className="text-xl" />
               </button>
 
-              <img
+              <PreloadedImage
                 src={selected.image || selected.url}
                 alt={selected.title}
+                priority={true}
+                containerClassName="max-h-[78vh] w-auto max-w-full rounded-[12px] shadow-2xl mx-auto min-h-[360px] min-w-[300px] sm:min-w-[460px]"
                 className="max-h-[78vh] w-auto max-w-full rounded-[12px] object-contain shadow-2xl mx-auto"
                 onContextMenu={(event) => event.preventDefault()}
               />
