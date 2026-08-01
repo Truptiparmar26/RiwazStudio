@@ -19,6 +19,22 @@ export default function Contact() {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  });
+
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    phone: false,
+    subject: false,
+    message: false
+  });
+
   useEffect(() => {
     if (!sent) return;
 
@@ -41,10 +57,86 @@ export default function Contact() {
     };
   }, [sent]);
 
+  const getFieldError = (fieldName) => {
+    const value = (formData[fieldName] || '').trim();
+    switch (fieldName) {
+      case 'name':
+        if (!value) return 'Full Name is required.';
+        if (value.length < 2) return 'Please enter at least 2 characters.';
+        return null;
+      case 'email':
+        if (!value) return 'Email address is required.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          return 'Please enter a valid email format (e.g., name@example.com).';
+        }
+        return null;
+      case 'phone':
+        if (!value || value.length !== 10) {
+          return 'Please enter a valid 10-digit phone number.';
+        }
+        return null;
+      case 'subject':
+        if (!value) return 'Please enter a subject for your inquiry.';
+        return null;
+      case 'message':
+        if (!value) return 'Please enter a message.';
+        if (value.length < 10) return 'Please enter at least 10 characters.';
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let finalValue = value;
+    if (name === 'phone') {
+      // Strictly prevent alphabets, special characters, and spaces; enforce exactly max 10 numeric digits
+      finalValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
+    if (!touched[name]) {
+      setTouched((prev) => ({ ...prev, [name]: true }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const handlePhoneKeyDown = (e) => {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter'];
+    if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const submit = (event) => {
     event.preventDefault();
-    const form = event.currentTarget;
-    const formData = Object.fromEntries(new FormData(form));
+
+    // Trigger validation visibility for all fields on submit attempt
+    const errors = {
+      name: getFieldError('name'),
+      email: getFieldError('email'),
+      phone: getFieldError('phone'),
+      subject: getFieldError('subject'),
+      message: getFieldError('message'),
+    };
+
+    if (Object.values(errors).some((err) => err !== null)) {
+      setTouched({
+        name: true,
+        email: true,
+        phone: true,
+        subject: true,
+        message: true,
+      });
+      return;
+    }
+
+    if (submitting) return;
     setSubmitting(true);
 
     const optimisticId = `msg-${Date.now()}`;
@@ -65,7 +157,7 @@ export default function Contact() {
         }
       })
       .catch(() => {
-        // Safe static fallback when testing offline
+        // Safe static fallback when testing offline or when local MongoDB experiences connection timeouts
       });
 
     // Predictable 1.2 second professional loading delay before popup celebration
@@ -73,7 +165,8 @@ export default function Contact() {
       upsertRecord('messages', { ...formData, id: optimisticId, title: formData.subject || 'Inquiry', status: 'unread' }, []);
       setSent(true);
       setSubmitting(false);
-      form.reset();
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      setTouched({ name: false, email: false, phone: false, subject: false, message: false });
     }, 1200);
   };
 
@@ -98,18 +191,40 @@ export default function Contact() {
             </div>
           </Reveal>
           <Reveal className="glass rounded-[8px] p-8 h-full flex flex-col justify-center border border-white/15">
-            <form onSubmit={submit} className="grid gap-4">
+            <form onSubmit={submit} className="grid gap-4" noValidate>
               {['name', 'phone', 'email', 'subject'].map((field) => (
-                <input 
-                  key={field} 
-                  required 
-                  name={field} 
-                  type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'} 
-                  placeholder={field[0].toUpperCase() + field.slice(1)} 
-                  className="rounded-[8px] border border-white/10 bg-white/5 px-5 py-4 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 focus:border-champagne focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(244,214,144,0.18)]" 
-                />
+                <div key={field} className="flex flex-col gap-1.5">
+                  <input 
+                    required 
+                    name={field} 
+                    type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'} 
+                    placeholder={field[0].toUpperCase() + field.slice(1)} 
+                    value={formData[field]}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={field === 'phone' ? handlePhoneKeyDown : undefined}
+                    className={`rounded-[8px] border ${touched[field] && getFieldError(field) ? 'border-rose-500/60' : 'border-white/10'} bg-white/5 px-5 py-4 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 focus:border-champagne focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(244,214,144,0.18)]`} 
+                  />
+                  {touched[field] && getFieldError(field) && (
+                    <p className="text-xs text-rose-400 pl-1">{getFieldError(field)}</p>
+                  )}
+                </div>
               ))}
-              <textarea required name="message" rows="6" placeholder="Message" className="resize-none rounded-[8px] border border-white/10 bg-white/5 px-5 py-4 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 focus:border-champagne focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(244,214,144,0.18)]" />
+              <div className="flex flex-col gap-1.5">
+                <textarea 
+                  required 
+                  name="message" 
+                  rows="6" 
+                  placeholder="Message" 
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  onBlur={handleBlur}
+                  className={`resize-none rounded-[8px] border ${touched.message && getFieldError('message') ? 'border-rose-500/60' : 'border-white/10'} bg-white/5 px-5 py-4 text-sm text-white placeholder:text-white/45 outline-none transition-all duration-300 focus:border-champagne focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(244,214,144,0.18)]`} 
+                />
+                {touched.message && getFieldError('message') && (
+                  <p className="text-xs text-rose-400 pl-1">{getFieldError('message')}</p>
+                )}
+              </div>
               <button disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded-full bg-champagne px-6 py-4 text-sm font-extrabold uppercase tracking-wider text-black shadow-[0_10px_30px_rgba(244,214,144,0.25)] transition duration-300 hover:scale-[1.02] hover:shadow-[0_15px_40px_rgba(244,214,144,0.45)] active:scale-[0.98] disabled:opacity-70">
                 {submitting ? 'Sending Inquiry...' : 'Send Inquiry'} {!submitting && <FiSend />}
               </button>

@@ -35,6 +35,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Riwaz Studio API is healthy' });
 });
 
+app.use('/api/admin', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/before-after', beforeAfterRoutes);

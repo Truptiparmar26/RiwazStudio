@@ -2,20 +2,56 @@ import { useEffect, useState } from 'react';
 
 const prefix = 'riwaz_admin_';
 
+export function getIndianTime(val, fallbackId) {
+  try {
+    if (typeof val === 'string' && val !== 'Today' && (val.includes('|') || val.toLowerCase().includes('m'))) {
+      return val;
+    }
+    let dateObj = null;
+    if (val && val !== 'Today' && !isNaN(new Date(val).getTime())) {
+      dateObj = new Date(val);
+    } else if (typeof fallbackId === 'string' && fallbackId.includes('-')) {
+      const parts = fallbackId.split('-');
+      const ts = Number(parts[parts.length - 1]);
+      if (!isNaN(ts) && ts > 1000000000000) {
+        dateObj = new Date(ts);
+      }
+    }
+    if (!dateObj) dateObj = new Date();
+
+    return dateObj.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).replace(',', ' |');
+  } catch {
+    return new Date().toLocaleDateString('en-IN');
+  }
+}
+
 export function normalizeRecords(records, type) {
-  return records.map((item, index) => ({
-    id: item.id || item._id || `${type}-${index + 1}`,
-    status: item.status || 'published',
-    featured: Boolean(item.featured),
-    updatedAt: item.updatedAt || 'Today',
-    ...item
-  }));
+  return records.map((item, index) => {
+    const id = item.id || item._id || `${type}-${index + 1}`;
+    const updatedAt = getIndianTime(item.updatedAt || item.createdAt, id);
+    return {
+      id,
+      status: item.status || 'published',
+      featured: Boolean(item.featured),
+      ...item,
+      updatedAt
+    };
+  });
 }
 
 export function loadCollection(type, fallback = []) {
   try {
     const saved = localStorage.getItem(`${prefix}${type}`);
-    return saved ? JSON.parse(saved) : normalizeRecords(fallback, type);
+    const raw = saved ? JSON.parse(saved) : fallback;
+    return normalizeRecords(Array.isArray(raw) ? raw : fallback, type);
   } catch {
     return normalizeRecords(fallback, type);
   }
@@ -28,10 +64,11 @@ export function saveCollection(type, records) {
 
 export function upsertRecord(type, record, fallback = []) {
   const records = loadCollection(type, fallback);
+  const nextId = record.id || `${type}-${Date.now()}`;
   const nextRecord = {
     ...record,
-    id: record.id || `${type}-${Date.now()}`,
-    updatedAt: 'Today'
+    id: nextId,
+    updatedAt: getIndianTime(record.updatedAt || record.createdAt || new Date(), nextId)
   };
   const exists = records.some((item) => item.id === nextRecord.id);
   const next = exists ? records.map((item) => (item.id === nextRecord.id ? nextRecord : item)) : [nextRecord, ...records];

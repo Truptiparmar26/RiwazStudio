@@ -12,8 +12,8 @@ npm run dev --workspace backend
 ## Admin
 
 ```txt
-Email: admin@riwazstudio.com
-Password: RiwazStudioo
+Email: riwazstudioofficial@gmail.com
+Password: Trutuu.@2612 (Encrypted via bcrypt)
 ```
 
 ## Modules

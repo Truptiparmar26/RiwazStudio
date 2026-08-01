@@ -4,7 +4,8 @@ import Admin from '../models/Admin.js';
 
 export default async function connectDatabase() {
   try {
-    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 6000 });
+    mongoose.set('bufferCommands', false);
+    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 3000 });
     console.log('MongoDB connected');
     await seedAdmin();
   } catch (error) {
@@ -14,18 +15,32 @@ export default async function connectDatabase() {
 }
 
 async function seedAdmin() {
-  const email = process.env.ADMIN_EMAIL;
-  const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password) return;
+  const email = (process.env.ADMIN_EMAIL || 'riwazstudioofficial@gmail.com').toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || 'Trutuu.@2612';
 
-  const exists = await Admin.findOne({ email: email.toLowerCase() });
-  if (exists) return;
+  try {
+    const encryptedPassword = await bcrypt.hash(password, 12);
+    let admin = await Admin.findOne({ role: 'admin' });
+    if (!admin) {
+      admin = await Admin.findOne({ email });
+    }
 
-  await Admin.create({
-    name: 'Riwaz Admin',
-    email,
-    password: await bcrypt.hash(password, 12),
-    role: 'admin'
-  });
-  console.log('Default admin created');
+    if (admin) {
+      admin.email = email;
+      admin.password = encryptedPassword;
+      admin.role = 'admin';
+      await admin.save();
+      console.log('Admin account updated with encrypted password in database');
+    } else {
+      await Admin.create({
+        name: 'Riwaz Admin',
+        email,
+        password: encryptedPassword,
+        role: 'admin'
+      });
+      console.log('Default admin created with encrypted password in database');
+    }
+  } catch (err) {
+    console.error('Failed to sync encrypted admin credentials:', err.message);
+  }
 }

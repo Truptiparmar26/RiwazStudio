@@ -24,8 +24,8 @@ PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/riwaz-studio
 JWT_SECRET=replace-this-with-a-long-secret
 CLIENT_URL=http://localhost:5173
-ADMIN_EMAIL=admin@riwazstudio.com
-ADMIN_PASSWORD=change-this-password
+ADMIN_EMAIL=riwazstudioofficial@gmail.com
+ADMIN_PASSWORD=Trutuu.@2612
 ```
 
 Frontend: `http://localhost:5173`
