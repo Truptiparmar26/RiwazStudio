@@ -10,7 +10,13 @@ const mapBlog = async (req) => {
   const payload = { ...req.body, author: req.admin?._id };
   if (typeof payload.tags === 'string') payload.tags = payload.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
   if (payload.content) payload.readingTime = readingTime(payload.content);
-  if (req.file) payload.featuredImage = await uploadToCloudinary(req.file, 'riwaz-studio/blogs');
+  if (req.file) {
+    payload.featuredImage = await uploadToCloudinary(req.file, 'riwaz-studio/blogs');
+  } else if (typeof payload.image === 'string' && payload.image.trim()) {
+    payload.featuredImage = { url: payload.image.trim(), publicId: null };
+  } else if (typeof payload.featuredImage === 'string' && payload.featuredImage.trim()) {
+    payload.featuredImage = { url: payload.featuredImage.trim(), publicId: null };
+  }
   return payload;
 };
 

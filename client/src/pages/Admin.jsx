@@ -17,6 +17,7 @@ import {
   FiLock,
   FiLogOut,
   FiMail,
+  FiMenu,
   FiMessageSquare,
   FiPlus,
   FiRefreshCw,
@@ -34,6 +35,7 @@ import { blogs, gallery, services, testimonials } from "../data/content.js";
 import {
   deleteRecord,
   loadCollection,
+  normalizeRecords,
   saveCollection,
   upsertRecord,
 } from "../utils/siteStore.js";
@@ -156,19 +158,28 @@ function titleOf(item, type) {
 }
 
 function normalizeForSave(type, form) {
-  if (type === "services" && typeof form.features === "string") {
+  const rawImg = form.image || form.bannerImage || form.featuredImage || form.url || "";
+  const imgStr = typeof rawImg === "object" && rawImg !== null ? (rawImg.url || rawImg.src || "") : (rawImg || "");
+  const base = {
+    ...form,
+    image: imgStr || (typeof form.image === "string" ? form.image : "") || "",
+    bannerImage: imgStr || (typeof form.bannerImage === "string" ? form.bannerImage : "") || "",
+    featuredImage: imgStr || (typeof form.featuredImage === "string" ? form.featuredImage : "") || "",
+  };
+
+  if (type === "services" && typeof base.features === "string") {
     return {
-      ...form,
-      features: form.features
+      ...base,
+      features: base.features
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
     };
   }
-  if (type === "gallery" && typeof form.tags === "string") {
+  if (type === "gallery" && typeof base.tags === "string") {
     return {
-      ...form,
-      tags: form.tags
+      ...base,
+      tags: base.tags
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
@@ -176,12 +187,12 @@ function normalizeForSave(type, form) {
   }
   if (type === "testimonials") {
     return {
-      ...form,
-      title: form.name || form.title,
-      rating: Number(form.rating || 5),
+      ...base,
+      title: base.name || base.title,
+      rating: Number(base.rating || 5),
     };
   }
-  return form;
+  return base;
 }
 
 function inputValue(value) {
@@ -214,10 +225,6 @@ function ForgotPasswordCard({ onNotice }) {
       setError("Please enter a valid executive email address.");
       return;
     }
-    if (cleanEmail !== "riwazstudioofficial@gmail.com") {
-      setError("⛔ Access Denied!!");
-      return;
-    }
     setError("");
     setIsSubmitting(true);
 
@@ -232,12 +239,12 @@ function ForgotPasswordCard({ onNotice }) {
         throw new Error(resData.message || "Unable to send OTP right now.");
       }
       sessionStorage.setItem("reset_email", cleanEmail);
-      onNotice("Verification OTP sent to your registered admin email address.");
+      onNotice("If the email is registered, a verification code has been sent.");
       navigate("/admin/verify-otp");
     } catch (err) {
       if (!err.message.includes("Too many")) {
         sessionStorage.setItem("reset_email", cleanEmail);
-        onNotice("Verification OTP dispatched. Check your inbox.");
+        onNotice("If the email is registered, a verification code has been sent.");
         navigate("/admin/verify-otp");
       } else {
         setError(err.message);
@@ -327,14 +334,17 @@ function VerifyOtpCard({ onNotice }) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timer, setTimer] = useState(60);
+  const [expiryTimer, setExpiryTimer] = useState(300);
   const [resendLoading, setResendLoading] = useState(false);
   const inputRefs = useRef([]);
 
   useEffect(() => {
-    if (timer <= 0) return;
-    const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+    const interval = setInterval(() => {
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      setExpiryTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
     return () => clearInterval(interval);
-  }, [timer]);
+  }, []);
 
   const handleChange = (e, index) => {
     const value = e.target.value;
@@ -375,6 +385,10 @@ function VerifyOtpCard({ onNotice }) {
 
   const handleVerify = async (e) => {
     e.preventDefault();
+    if (expiryTimer <= 0) {
+      setError("This OTP has expired after 5 minutes. Please resend a new code.");
+      return;
+    }
     const otpCode = otp.join("");
     if (otpCode.length < 6) {
       setError("Please enter the complete 6-digit verification code.");
@@ -384,7 +398,7 @@ function VerifyOtpCard({ onNotice }) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/admin/verify-otp", {
+      const res = await fetch("/api/admin/verify-reset-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: otpCode }),
@@ -428,7 +442,7 @@ function VerifyOtpCard({ onNotice }) {
     setResendLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/resend-otp", {
+      const res = await fetch("/api/admin/resend-reset-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -438,12 +452,14 @@ function VerifyOtpCard({ onNotice }) {
         throw new Error(data.message || "Could not resend OTP at the moment.");
       }
       setTimer(60);
+      setExpiryTimer(300);
       setOtp(["", "", "", "", "", ""]);
-      onNotice("New OTP sent successfully. Please check your email.");
+      onNotice("If the email is registered, a verification code has been sent.");
       inputRefs.current[0]?.focus();
     } catch (err) {
-      onNotice(err.message || "New OTP sent successfully.");
+      onNotice(err.message || "If the email is registered, a verification code has been sent.");
       setTimer(60);
+      setExpiryTimer(300);
     } finally {
       setResendLoading(false);
     }
@@ -466,9 +482,16 @@ function VerifyOtpCard({ onNotice }) {
 
       <form onSubmit={handleVerify} className="mt-7 space-y-5" noValidate>
         <div>
-          <label className="mb-3 block text-center text-xs font-extrabold uppercase tracking-wider text-slate-700">
-            Enter 6-Digit OTP
-          </label>
+          <div className="flex items-center justify-between mb-3 text-xs font-extrabold uppercase tracking-wider px-1">
+            <span className="text-slate-700">Enter 6-Digit OTP</span>
+            <span className={expiryTimer <= 30 ? "text-rose-600 animate-pulse font-black" : "text-blue-700 font-extrabold"}>
+              {expiryTimer > 0 ? (
+                <>⏱️ Expires in: {Math.floor(expiryTimer / 60).toString().padStart(2, "0")}:{(expiryTimer % 60).toString().padStart(2, "0")}</>
+              ) : (
+                <span className="text-rose-600">⚠️ Code Expired</span>
+              )}
+            </span>
+          </div>
           <div
             className="flex justify-center gap-2 sm:gap-3"
             onPaste={handlePaste}
@@ -480,7 +503,7 @@ function VerifyOtpCard({ onNotice }) {
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
-                disabled={isSubmitting}
+                disabled={isSubmitting || expiryTimer <= 0}
                 value={digit}
                 onChange={(e) => handleChange(e, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
@@ -496,14 +519,14 @@ function VerifyOtpCard({ onNotice }) {
         </div>
 
         <motion.button
-          disabled={isSubmitting || otp.join("").length < 6}
+          disabled={isSubmitting || otp.join("").length < 6 || expiryTimer <= 0}
           whileHover={
-            isSubmitting || otp.join("").length < 6
+            isSubmitting || otp.join("").length < 6 || expiryTimer <= 0
               ? {}
               : { scale: 1.02, y: -2 }
           }
           whileTap={
-            isSubmitting || otp.join("").length < 6 ? {} : { scale: 0.98, y: 0 }
+            isSubmitting || otp.join("").length < 6 || expiryTimer <= 0 ? {} : { scale: 0.98, y: 0 }
           }
           type="submit"
           className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2054f4] via-[#2f66ff] to-[#4578ff] py-4 text-sm font-black uppercase tracking-wider text-white shadow-[0_10px_25px_rgba(32,84,244,0.35)] transition-all duration-300 hover:shadow-[0_15px_35px_rgba(32,84,244,0.45)] disabled:opacity-60 disabled:cursor-not-allowed"
@@ -535,7 +558,7 @@ function VerifyOtpCard({ onNotice }) {
               <span>Sending New Code...</span>
             </>
           ) : timer > 0 ? (
-            <span>Resend OTP in 00:{timer < 10 ? `0${timer}` : timer}</span>
+            <span>Resend new code in {timer < 10 ? `0${timer}` : timer}s</span>
           ) : (
             <>
               <FiRefreshCw className="h-3.5 w-3.5" />
@@ -556,7 +579,7 @@ function VerifyOtpCard({ onNotice }) {
   );
 }
 
-function ResetPasswordCard({ onNotice }) {
+function ResetPasswordCard({ onNotice, onReset }) {
   const navigate = useNavigate();
   const resetToken = sessionStorage.getItem("reset_token");
   const email =
@@ -576,7 +599,13 @@ function ResetPasswordCard({ onNotice }) {
   const upperOk = /[A-Z]/.test(password);
   const lowerOk = /[a-z]/.test(password);
   const numOk = /\d/.test(password);
-  const allValid = lenOk && upperOk && lowerOk && numOk;
+  const specialOk = /[^A-Za-z0-9]/.test(password);
+  const allValid = lenOk && upperOk && lowerOk && numOk && specialOk;
+
+  const strengthCount = [lenOk, upperOk, lowerOk, numOk, specialOk].filter(Boolean).length;
+  const strengthText = strengthCount === 0 ? "None" : strengthCount <= 2 ? "Weak" : strengthCount <= 4 ? "Medium" : "Strong";
+  const strengthColor = strengthCount === 0 ? "bg-slate-200" : strengthCount <= 2 ? "bg-rose-500" : strengthCount <= 4 ? "bg-amber-500" : "bg-emerald-500";
+  const strengthTextColor = strengthCount === 0 ? "text-slate-400" : strengthCount <= 2 ? "text-rose-600" : strengthCount <= 4 ? "text-amber-600" : "text-emerald-600";
 
   if (!resetToken && !isSuccess) {
     return (
@@ -647,9 +676,12 @@ function ResetPasswordCard({ onNotice }) {
       }
       sessionStorage.removeItem("reset_token");
       sessionStorage.removeItem("reset_email");
+      localStorage.removeItem("riwaz_token");
+      if (typeof onReset === "function") onReset();
+      localStorage.setItem("riwaz_admin_custom_pwd", password);
       setIsSuccess(true);
       onNotice(
-        "Password Reset Successfully! Your admin password has been updated successfully.",
+        "Password reset successfully. You can now login with your new password.",
       );
       setTimeout(() => {
         navigate("/admin/login");
@@ -662,9 +694,12 @@ function ResetPasswordCard({ onNotice }) {
       ) {
         sessionStorage.removeItem("reset_token");
         sessionStorage.removeItem("reset_email");
+        localStorage.removeItem("riwaz_token");
+        if (typeof onReset === "function") onReset();
+        localStorage.setItem("riwaz_admin_custom_pwd", password);
         setIsSuccess(true);
         onNotice(
-          "Password Reset Successfully! Your admin password has been updated successfully.",
+          "Password reset successfully. You can now login with your new password.",
         );
         setTimeout(() => {
           navigate("/admin/login");
@@ -766,34 +801,39 @@ function ResetPasswordCard({ onNotice }) {
             </p>
           )}
 
-          <div className="mt-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80 space-y-2">
-            <p className="text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">
-              Password Security Criteria:
+          <div className="mt-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80 space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider mb-1.5">
+                <span className="text-slate-600">Password Strength:</span>
+                <span className={strengthTextColor}>{strengthText}</span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div className={`h-full transition-all duration-300 ${strengthColor}`} style={{ width: `${(strengthCount / 5) * 100}%` }}></div>
+              </div>
+            </div>
+            <p className="text-[11px] font-black uppercase tracking-wider text-slate-600">
+              Security Requirements:
             </p>
             <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
-              <div
-                className={`flex items-center gap-1.5 ${lenOk ? "text-emerald-700" : "text-slate-400"}`}
-              >
+              <div className={`flex items-center gap-1.5 ${lenOk ? "text-emerald-700" : "text-slate-400"}`}>
                 <span className="text-sm">{lenOk ? "✓" : "○"}</span>
                 <span>At least 8 chars</span>
               </div>
-              <div
-                className={`flex items-center gap-1.5 ${upperOk ? "text-emerald-700" : "text-slate-400"}`}
-              >
+              <div className={`flex items-center gap-1.5 ${upperOk ? "text-emerald-700" : "text-slate-400"}`}>
                 <span className="text-sm">{upperOk ? "✓" : "○"}</span>
-                <span>One uppercase</span>
+                <span>1 uppercase</span>
               </div>
-              <div
-                className={`flex items-center gap-1.5 ${lowerOk ? "text-emerald-700" : "text-slate-400"}`}
-              >
+              <div className={`flex items-center gap-1.5 ${lowerOk ? "text-emerald-700" : "text-slate-400"}`}>
                 <span className="text-sm">{lowerOk ? "✓" : "○"}</span>
-                <span>One lowercase</span>
+                <span>1 lowercase</span>
               </div>
-              <div
-                className={`flex items-center gap-1.5 ${numOk ? "text-emerald-700" : "text-slate-400"}`}
-              >
+              <div className={`flex items-center gap-1.5 ${numOk ? "text-emerald-700" : "text-slate-400"}`}>
                 <span className="text-sm">{numOk ? "✓" : "○"}</span>
-                <span>One number (0-9)</span>
+                <span>1 number (0-9)</span>
+              </div>
+              <div className={`flex items-center gap-1.5 col-span-2 ${specialOk ? "text-emerald-700" : "text-slate-400"}`}>
+                <span className="text-sm">{specialOk ? "✓" : "○"}</span>
+                <span>1 special symbol (!@#$%^&*)</span>
               </div>
             </div>
           </div>
@@ -886,6 +926,7 @@ export default function Admin() {
   const activeModule = moduleByKey(active);
 
   const [token, setToken] = useState(localStorage.getItem("riwaz_token") || "");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -921,19 +962,40 @@ export default function Admin() {
         label: "Gallery Photos",
         value: records.gallery?.length || 0,
         icon: FiImage,
-        color: "from-sky-400 to-blue-600",
+        color: "from-[#2054f4] to-[#2f66ff]",
+        shadow: "shadow-[0_8px_20px_rgba(32,84,244,0.3)]",
+        badgeText: "Portfolio Archive",
+        badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+        detailLabel: "Website Visibility",
+        detailVal: `${records.gallery?.filter((item) => item.status !== "draft").length || 0} Published Live`,
+        link: "/admin/gallery",
+        linkText: "Manage Photos",
       },
       {
-        label: "Services",
+        label: "Services Offered",
         value: records.services?.length || 0,
         icon: FiStar,
-        color: "from-amber-300 to-orange-500",
+        color: "from-[#f59e0b] to-[#fbbf24]",
+        shadow: "shadow-[0_8px_20px_rgba(245,158,11,0.3)]",
+        badgeText: "Client Suites",
+        badgeColor: "bg-amber-50 text-amber-800 border-amber-200",
+        detailLabel: "Active Packages",
+        detailVal: `${records.services?.filter((item) => item.status !== "draft").length || 0} Active on Website`,
+        link: "/admin/services",
+        linkText: "Edit Services",
       },
       {
-        label: "Blogs",
+        label: "Published Blogs",
         value: records.blogs?.length || 0,
         icon: FiFileText,
-        color: "from-fuchsia-400 to-rose-500",
+        color: "from-[#ec4899] to-[#f43f5e]",
+        shadow: "shadow-[0_8px_20px_rgba(236,72,153,0.3)]",
+        badgeText: "SEO Articles",
+        badgeColor: "bg-rose-50 text-rose-700 border-rose-200",
+        detailLabel: "Content Status",
+        detailVal: `${records.blogs?.filter((item) => item.status !== "draft").length || 0} Articles Indexed`,
+        link: "/admin/blogs",
+        linkText: "Manage Articles",
       },
       {
         label: "Unread Messages",
@@ -941,7 +1003,14 @@ export default function Admin() {
           records.messages?.filter((item) => item.status !== "read").length ||
           0,
         icon: FiMessageSquare,
-        color: "from-emerald-300 to-teal-600",
+        color: "from-[#10b981] to-[#14b8a6]",
+        shadow: "shadow-[0_8px_20px_rgba(16,185,129,0.3)]",
+        badgeText: "Customer Inbox",
+        badgeColor: "bg-emerald-50 text-emerald-800 border-emerald-200",
+        detailLabel: "Total Received",
+        detailVal: `${records.messages?.length || 0} Total Inquiries`,
+        link: "/admin/messages",
+        linkText: "Open Inbox",
       },
     ],
     [records],
@@ -979,11 +1048,8 @@ export default function Admin() {
           if (res.ok) {
             const json = await res.json();
             const serverItems = json.data?.items || json.data || [];
-            if (Array.isArray(serverItems)) {
-              const normalized = serverItems.map((item) => ({
-                ...item,
-                id: item._id || item.id,
-              }));
+            if (Array.isArray(serverItems) && (serverItems.length > 0 || key === "messages")) {
+              const normalized = normalizeRecords(serverItems, key);
               updated[key] = normalized;
               saveCollection(key, normalized);
             }
@@ -1009,14 +1075,15 @@ export default function Admin() {
   const login = async (event) => {
     event.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
+    const customPwd = localStorage.getItem("riwaz_admin_custom_pwd");
+    const validPassword = password === "Trutuu.@2612" || (customPwd && password === customPwd);
     const isExecutive =
-      cleanEmail === "riwazstudioofficial@gmail.com" &&
-      password === "Trutuu.@2612";
+      cleanEmail === "riwazstudioofficial@gmail.com" && validPassword;
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const response = await fetch("/api/auth/login", {
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail, password }),
@@ -1031,6 +1098,7 @@ export default function Admin() {
           localStorage.setItem("riwaz_token", accessToken);
           setToken(accessToken);
           setNotice("Login Successful! 🎉 Welcome to Executive Admin Portal.");
+          navigate("/admin/dashboard");
           return;
         }
       }
@@ -1043,6 +1111,7 @@ export default function Admin() {
       localStorage.setItem("riwaz_token", demoToken);
       setToken(demoToken);
       setNotice("Login Successful! 🎉 Welcome to Executive Admin Portal.");
+      navigate("/admin/dashboard");
     } else {
       setNotice(
         "Invalid executive email or security password. Please try again or use Forgot Password.",
@@ -1106,6 +1175,7 @@ export default function Admin() {
       "messages",
       upsertRecord("messages", { ...item, status: "read" }, fallback.messages),
     );
+    setNotice("Message marked as read! ✅");
     if (!token?.startsWith("demo.") && item.id) {
       try {
         await fetch(`/api/contact/${item.id}/read`, {
@@ -1158,6 +1228,27 @@ export default function Admin() {
   ) {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-[#eff3f9] via-[#e6edf6] to-[#dde6f3] text-[#1e243a]">
+        {/* Universal Floating Toast Notification on Auth Screens */}
+        <AnimatePresence>
+          {notice && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="fixed right-6 top-6 z-50 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/95 px-5 py-4 text-sm font-extrabold text-emerald-900 shadow-2xl backdrop-blur-md max-w-md"
+            >
+              <FiCheckCircle className="h-6 w-6 text-emerald-600 flex-shrink-0" />
+              <span className="flex-1 leading-snug">{notice}</span>
+              <button
+                onClick={() => setNotice("")}
+                className="grid h-7 w-7 place-items-center rounded-lg text-emerald-700 hover:bg-emerald-200/50 transition"
+              >
+                <FiX className="text-base" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Ambient background accent decor */}
         <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-blue-500/10 blur-[100px]" />
         <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-amber-400/15 blur-[90px]" />
@@ -1175,7 +1266,7 @@ export default function Admin() {
             ) : page === "verify-otp" ? (
               <VerifyOtpCard onNotice={setNotice} />
             ) : page === "reset-password" ? (
-              <ResetPasswordCard onNotice={setNotice} />
+              <ResetPasswordCard onNotice={setNotice} onReset={() => setToken("")} />
             ) : (
               <>
                 {/* Header section in elegant white theme */}
@@ -1292,21 +1383,22 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-[#eef1f8] text-[#20243a]">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[240px] bg-[#111029] text-white shadow-2xl lg:block">
-        <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-          <span className="grid h-10 w-10 place-items-center rounded-[8px] bg-white text-lg font-black text-[#246bfe]">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-[260px] shrink-0 flex-col border-r border-slate-800/80 bg-[#111029] text-white shadow-2xl lg:flex">
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[8px] bg-white text-lg font-black text-[#246bfe] shadow-md">
             R
           </span>
-          <div>
-            <strong className="block text-lg">RIWAZ</strong>
-            <span className="text-xs uppercase tracking-[.2em] text-white/40">
+          <div className="truncate">
+            <strong className="block text-lg font-extrabold tracking-tight">RIWAZ</strong>
+            <span className="text-xs uppercase tracking-[.2em] text-white/40 font-bold">
               Admin
             </span>
           </div>
         </div>
-        <nav className="p-3">
-          <p className="px-3 py-3 text-[.68rem] font-bold uppercase tracking-[.18em] text-white/35">
-            Menu
+
+        <nav className="flex-1 min-h-0 overflow-y-auto p-3 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#246bfe] hover:[&::-webkit-scrollbar-thumb]:bg-[#4281ff]">
+          <p className="px-3 py-3 text-[.68rem] font-bold uppercase tracking-[.18em] text-white/40">
+            Menu Navigation
           </p>
           {modules.map(({ key, label, icon: Icon }) => (
             <Link
@@ -1316,28 +1408,118 @@ export default function Admin() {
                 setDraft(null);
                 setQuery("");
               }}
-              className={`mb-1 flex items-center justify-between rounded-[8px] px-3 py-3 text-sm font-semibold transition ${active === key ? "bg-[#246bfe] text-white shadow-lg shadow-blue-500/20" : "text-white/62 hover:bg-white/8 hover:text-white"}`}
+              className={`mb-1.5 flex items-center justify-between rounded-[10px] px-3.5 py-3 text-sm font-bold transition-all ${active === key ? "bg-[#246bfe] text-white shadow-lg shadow-blue-500/25 translate-x-1" : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1"}`}
             >
-              <span className="flex items-center gap-3">
-                <Icon /> {label}
+              <span className="flex items-center gap-3 truncate">
+                <Icon className="text-base shrink-0" /> <span className="truncate">{label}</span>
               </span>
-              <FiChevronRight className="text-xs opacity-50" />
+              <FiChevronRight className="text-xs opacity-50 shrink-0" />
             </Link>
           ))}
         </nav>
+
+        <div className="shrink-0 border-t border-white/10 p-3.5 bg-[#111029]">
+          <div className="rounded-[12px] bg-gradient-to-r from-white/5 to-white/10 p-3 text-center text-xs border border-white/10 shadow-inner">
+            <p className="font-black text-white/90">Executive Portal</p>
+            <p className="mt-0.5 text-[10px] font-semibold text-[#e5b85f]">V2.0 Real-World Edition</p>
+          </div>
+        </div>
       </aside>
 
-      <div className="lg:pl-[240px]">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white/92 px-4 backdrop-blur md:px-6">
-          <div>
-            <h1 className="text-lg font-extrabold md:text-xl">
-              {activeModule.label === "Dashboard"
-                ? "Dashboard Overview"
-                : `${activeModule.label} Management`}
-            </h1>
-            <p className="text-xs text-slate-500">Riwaz Studio / Admin Panel</p>
+      {/* Mobile Slide-Out Drawer Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-y-0 left-0 w-[260px] bg-[#111029] text-white shadow-2xl flex flex-col justify-between h-screen overflow-hidden"
+            >
+              <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-5">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-white text-base font-black text-[#246bfe] shadow-md">
+                    R
+                  </span>
+                  <div>
+                    <strong className="block text-base font-extrabold tracking-tight">RIWAZ</strong>
+                    <span className="text-[10px] uppercase tracking-[.2em] text-white/40 font-bold">
+                      Admin
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition"
+                  title="Close menu"
+                >
+                  <FiX className="text-base" />
+                </button>
+              </div>
+
+              <nav className="flex-1 min-h-0 overflow-y-auto p-3 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#246bfe] hover:[&::-webkit-scrollbar-thumb]:bg-[#4281ff]">
+                <p className="px-3 py-3 text-[.68rem] font-bold uppercase tracking-[.18em] text-white/40">
+                  Menu Navigation
+                </p>
+                {modules.map(({ key, label, icon: Icon }) => (
+                  <Link
+                    key={key}
+                    to={key === "dashboard" ? "/admin" : `/admin/${key}`}
+                    onClick={() => {
+                      setDraft(null);
+                      setQuery("");
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`mb-1.5 flex items-center justify-between rounded-[10px] px-3.5 py-3 text-sm font-bold transition-all ${active === key ? "bg-[#246bfe] text-white shadow-lg shadow-blue-500/25 translate-x-1" : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1"}`}
+                  >
+                    <span className="flex items-center gap-3 truncate">
+                      <Icon className="text-base shrink-0" /> <span className="truncate">{label}</span>
+                    </span>
+                    <FiChevronRight className="text-xs opacity-50 shrink-0" />
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="shrink-0 border-t border-white/10 p-3.5 bg-[#111029]">
+                <div className="rounded-[12px] bg-gradient-to-r from-white/5 to-white/10 p-3 text-center text-xs border border-white/10 shadow-inner">
+                  <p className="font-black text-white/90">Executive Portal</p>
+                  <p className="mt-0.5 text-[10px] font-semibold text-[#e5b85f]">V2.0 Real-World Edition</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="lg:pl-[260px] flex flex-col min-h-screen max-w-full min-w-0">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-3 sm:px-6 backdrop-blur shadow-xs">
+          <div className="flex items-center gap-2 sm:gap-3.5">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 lg:hidden shadow-sm hover:bg-slate-100 transition"
+              title="Open Admin Menu"
+            >
+              <FiMenu className="text-lg" />
+            </button>
+            <div>
+              <h1 className="text-base font-extrabold md:text-xl leading-snug">
+                {activeModule.label === "Dashboard"
+                  ? "Dashboard Overview"
+                  : `${activeModule.label} Management`}
+              </h1>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium">Riwaz Studio / Admin Panel</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             <label className="hidden items-center gap-2 rounded-[8px] border border-slate-200 bg-white px-3 py-2 md:flex">
               <FiSearch className="text-slate-400" />
               <input
@@ -1359,13 +1541,13 @@ export default function Admin() {
             >
               <FiRefreshCw className="text-sm" /> Sync Server
             </button>
-            <button className="relative grid h-10 w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600">
+            <button className="relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600">
               <FiBell />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
             </button>
             <Link
               to="/"
-              className="grid h-10 w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600"
+              className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600"
               title="Back to website"
             >
               <FiGrid />
@@ -1375,8 +1557,9 @@ export default function Admin() {
                 localStorage.removeItem("riwaz_token");
                 setToken("");
                 setNotice("You have been securely logged out.");
+                navigate("/admin/login");
               }}
-              className="grid h-10 w-10 place-items-center rounded-[8px] bg-[#111029] text-white"
+              className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-[8px] bg-[#111029] text-white"
               title="Logout"
             >
               <FiLogOut />
@@ -1384,7 +1567,7 @@ export default function Admin() {
           </div>
         </header>
 
-        <main className="p-4 md:p-6">
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 w-full max-w-full min-w-0">
           <AnimatePresence>
             {notice && (
               <motion.div
@@ -1434,74 +1617,145 @@ export default function Admin() {
 }
 
 function Dashboard({ stats, records }) {
+  const totalGallery = records.gallery?.length || 0;
+  const liveGallery = records.gallery?.filter(item => item.status !== "draft").length || 0;
+  const galleryPercent = totalGallery ? Math.round((liveGallery / totalGallery) * 100) : 100;
+
+  const totalServices = records.services?.length || 0;
+  const liveServices = records.services?.filter(item => item.status !== "draft").length || 0;
+  const servicesPercent = totalServices ? Math.round((liveServices / totalServices) * 100) : 100;
+
+  const totalBlogs = records.blogs?.length || 0;
+  const liveBlogs = records.blogs?.filter(item => item.status !== "draft").length || 0;
+  const blogsPercent = totalBlogs ? Math.round((liveBlogs / totalBlogs) * 100) : 100;
+
+  const totalMessages = records.messages?.length || 0;
+  const handledMessages = records.messages?.filter(item => item.status !== "new").length || 0;
+  const responseRate = totalMessages ? Math.round((handledMessages / totalMessages) * 100) : 100;
+
+  const totalContent = totalGallery + totalServices + totalBlogs;
+  const galRatio = totalContent ? Math.round((totalGallery / totalContent) * 100) : 34;
+  const srvRatio = totalContent ? Math.round((totalServices / totalContent) * 100) : 33;
+  const blgRatio = totalContent ? Math.max(1, 100 - galRatio - srvRatio) : 33;
+
   return (
-    <div className="grid gap-5">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, color }, index) => (
+    <div className="grid gap-6 min-w-0 w-full max-w-full overflow-x-hidden">
+      <div className="grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 min-w-0 w-full max-w-full">
+        {stats.map(({ label, value, icon: Icon, color, shadow, badgeText, badgeColor, detailLabel, detailVal, link, linkText }, index) => (
           <motion.div
             key={label}
-            className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm"
-            initial={{ opacity: 0, y: 24, rotateX: -8 }}
-            animate={{ opacity: 1, y: 0, rotateX: 0 }}
-            transition={{ delay: index * 0.06 }}
-            whileHover={{ y: -5, rotateX: 2 }}
+            className="group relative flex flex-col justify-between rounded-[22px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgba(15,23,42,0.04)] transition-all duration-300 hover:shadow-[0_12px_35px_rgba(32,84,244,0.1)] hover:border-blue-300 min-w-0 w-full max-w-full overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: index * 0.06 }}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-500">{label}</p>
-                <strong className="mt-3 block text-3xl font-black">
+            <div>
+              <div className="flex items-center justify-between gap-3 min-w-0">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider min-w-0 ${badgeColor}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse shrink-0" />
+                  <span className="truncate">{badgeText}</span>
+                </span>
+                <span
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br ${color} text-xl text-white ${shadow} transition-transform duration-300 group-hover:scale-105`}
+                >
+                  <Icon />
+                </span>
+              </div>
+
+              <div className="mt-4 min-w-0">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400 truncate">{label}</p>
+                <strong className="mt-1 block text-3xl sm:text-4xl font-black text-slate-900 tracking-tight truncate">
                   {value}
                 </strong>
               </div>
-              <span
-                className={`grid h-12 w-12 place-items-center rounded-[8px] bg-gradient-to-br ${color} text-xl text-white shadow-lg`}
-              >
-                <Icon />
-              </span>
             </div>
-            <div className="mt-5 flex h-12 items-end gap-1">
-              {chartBars.map((bar, i) => (
-                <span
-                  key={i}
-                  className={`flex-1 rounded-t bg-gradient-to-t ${color} opacity-75`}
-                  style={{ height: `${bar}%` }}
-                />
-              ))}
+            
+            <div className="mt-6 pt-3.5 border-t border-slate-100 flex flex-col gap-3.5 min-w-0">
+              <div className="flex items-center justify-between text-xs font-bold gap-2 min-w-0">
+                <span className="text-slate-400 font-extrabold truncate">{detailLabel}</span>
+                <span className="text-slate-700 font-black shrink-0">{detailVal}</span>
+              </div>
+              
+              <Link
+                to={link || "/admin"}
+                className="flex items-center justify-between w-full rounded-xl bg-slate-50 hover:bg-[#246bfe] text-slate-700 hover:text-white px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 shadow-2xs group/btn min-w-0"
+              >
+                <span className="truncate">{linkText}</span>
+                <span className="text-sm font-black transition-transform duration-200 group-hover/btn:translate-x-1 shrink-0">&rarr;</span>
+              </Link>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
-        <div className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-extrabold">Recent Messages</h2>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-sm">
-              <thead className="text-slate-400">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[1.35fr_.65fr] min-w-0 w-full max-w-full">
+        <div className="rounded-[24px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_4px_25px_rgba(15,23,42,0.04)] min-w-0 w-full max-w-full overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 gap-2 min-w-0">
+            <div className="min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/60 inline-block">Live Inbox</span>
+              <h2 className="mt-1.5 text-base sm:text-lg font-black text-slate-900 truncate">Recent Customer Inquiries</h2>
+            </div>
+            <Link to="/admin/messages" className="text-xs font-extrabold text-[#246bfe] hover:underline flex items-center gap-1 shrink-0">
+              View All &rarr;
+            </Link>
+          </div>
+
+          {/* Mobile view for recent messages (No wide table overflow!) */}
+          <div className="mt-4 space-y-3 lg:hidden min-w-0 w-full">
+            {(records.messages || []).slice(0, 5).map((item) => (
+              <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 flex flex-col gap-2 min-w-0">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <strong className="font-black text-slate-900 text-sm truncate min-w-0 flex-1">{item.name}</strong>
+                  <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                    item.status === "read" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                    item.status === "replied" ? "bg-purple-100 text-purple-800 border border-purple-200" : "bg-blue-100 text-blue-800 border border-blue-200"
+                  }`}>
+                    {item.status || "new"}
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-slate-600 truncate min-w-0">{item.subject || "General Inquiry"}</p>
+                <div className="text-right text-[11px] font-bold text-slate-400 border-t border-slate-200/50 pt-2">{item.updatedAt}</div>
+              </div>
+            ))}
+            {!(records.messages || []).length && (
+              <div className="py-8 text-center text-slate-400 text-xs font-bold">
+                No customer messages in archive yet.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="mt-4 hidden lg:block overflow-x-auto min-w-0 w-full">
+            <table className="w-full min-w-[600px] text-left text-sm">
+              <thead className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                 <tr>
-                  <th className="py-3">Customer</th>
-                  <th>Subject</th>
-                  <th>Status</th>
-                  <th>Date</th>
+                  <th className="py-3 pb-3.5">Customer</th>
+                  <th className="pb-3.5">Subject</th>
+                  <th className="pb-3.5">Status</th>
+                  <th className="pb-3.5 text-right">Date</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 font-semibold">
                 {(records.messages || []).slice(0, 6).map((item) => (
-                  <tr key={item.id} className="border-t border-slate-100">
-                    <td className="py-4 font-bold">{item.name}</td>
-                    <td>{item.subject}</td>
+                  <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 pl-2 font-black text-slate-900 rounded-l-xl">{item.name}</td>
+                    <td className="text-slate-600">{item.subject || "General Inquiry"}</td>
                     <td>
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
-                        {item.status}
+                      <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wide shadow-2xs ${
+                        item.status === "read" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                        item.status === "replied" ? "bg-purple-100 text-purple-800 border border-purple-200" : "bg-blue-100 text-blue-800 border border-blue-200"
+                      }`}>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                        {item.status || "new"}
                       </span>
                     </td>
-                    <td>{item.updatedAt}</td>
+                    <td className="text-right text-xs font-bold text-slate-400 pr-2 rounded-r-xl">{item.updatedAt}</td>
                   </tr>
                 ))}
                 {!(records.messages || []).length && (
                   <tr>
-                    <td colSpan="4" className="py-8 text-center text-slate-400">
-                      No customer messages yet.
+                    <td colSpan="4" className="py-12 text-center text-slate-400 font-bold">
+                      No customer messages in archive yet.
                     </td>
                   </tr>
                 )}
@@ -1509,23 +1763,64 @@ function Dashboard({ stats, records }) {
             </table>
           </div>
         </div>
-        <div className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-extrabold">Website Health</h2>
-          <div className="mt-5 grid gap-4">
-            {[
-              "CRUD connected to website pages",
-              "Hidden admin route active",
-              "Local preview storage enabled",
-              "Backend API ready for sync",
-            ].map((item) => (
-              <div
-                key={item}
-                className="flex items-center gap-3 rounded-[8px] bg-slate-50 p-3 text-sm font-semibold text-slate-600"
-              >
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />{" "}
-                {item}
+        
+        <div className="rounded-[24px] border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_4px_25px_rgba(15,23,42,0.04)] flex flex-col justify-between min-w-0 w-full max-w-full overflow-hidden">
+          <div className="min-w-0">
+            <div className="border-b border-slate-100 pb-4 min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-widest text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200/60 inline-block">Live Analytics</span>
+              <h2 className="mt-1.5 text-base sm:text-lg font-black text-slate-900 truncate">Content & Inquiry Activity Graph</h2>
+            </div>
+            
+            {/* Top Proportional Distribution Stacked Graph */}
+            <div className="mt-4 p-3.5 rounded-[18px] bg-slate-50/80 border border-slate-100/80 min-w-0">
+              <div className="flex items-center justify-between text-[11px] font-extrabold text-slate-600 mb-2">
+                <span>Studio Content Matrix ({totalContent} total items)</span>
+                <span className="text-[#246bfe]">Live Ratio</span>
               </div>
-            ))}
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-200 gap-[2px]">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${galRatio}%` }} transition={{ duration: 0.8, ease: "easeOut" }} title={`Gallery: ${galRatio}%`} className="h-full bg-[#246bfe]" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${srvRatio}%` }} transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }} title={`Services: ${srvRatio}%`} className="h-full bg-amber-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${blgRatio}%` }} transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }} title={`Blogs: ${blgRatio}%`} className="h-full bg-rose-500" />
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[10px] font-bold text-slate-500">
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#246bfe]" /> Gallery ({galRatio}%)</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> Services ({srvRatio}%)</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500" /> Blogs ({blgRatio}%)</span>
+              </div>
+            </div>
+
+            {/* Individual Real-world Module Activity Graphs */}
+            <div className="mt-4 space-y-4 min-w-0 px-1">
+              {[
+                { name: "Portfolio Publication Rate", value: galleryPercent, count: `${liveGallery}/${totalGallery} live`, color: "bg-[#246bfe]" },
+                { name: "Service Suite Availability", value: servicesPercent, count: `${liveServices}/${totalServices} live`, color: "bg-amber-500" },
+                { name: "SEO Blog Index Rate", value: blogsPercent, count: `${liveBlogs}/${totalBlogs} live`, color: "bg-rose-500" },
+                { name: "Inbox Response & Read Rate", value: responseRate, count: `${handledMessages}/${totalMessages} handled`, color: "bg-emerald-500" },
+              ].map((bar) => (
+                <div key={bar.name} className="min-w-0">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5 gap-2">
+                    <span className="truncate min-w-0">{bar.name}</span>
+                    <span className="text-slate-400 font-extrabold text-[11px] shrink-0">{bar.count} ({bar.value}%)</span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${bar.value}%` }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className={`h-full ${bar.color} rounded-full`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="mt-6 rounded-[16px] bg-[#111029] p-4 text-white shadow-lg flex items-center justify-between gap-3 min-w-0 w-full">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-wider text-[#e5b85f] truncate">Realtime Graph Sync</p>
+              <p className="text-[11px] font-semibold text-slate-300 mt-0.5 truncate">Metrics dynamically generated from live database</p>
+            </div>
+            <span className="h-3 w-3 rounded-full bg-emerald-400 animate-ping shadow-[0_0_12px_#34d399] shrink-0" />
           </div>
         </div>
       </div>
@@ -1560,72 +1855,166 @@ function ListPage({
           </Link>
         )}
       </div>
-      <div className="mt-5 overflow-x-auto">
+
+      {/* Mobile Card Layout for small screens */}
+      <div className="mt-6 space-y-4 lg:hidden min-w-0 w-full">
+        {filtered.map((item) => (
+          <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs transition-all hover:shadow-md hover:border-blue-200 min-w-0 w-full">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 min-w-0">
+              <strong className="block font-black text-slate-900 text-base sm:text-lg leading-snug break-words flex-1 min-w-0">{titleOf(item, active)}</strong>
+              <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider shadow-2xs ${
+                item.status === "published" || item.status === "read" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                item.status === "replied" ? "bg-blue-100 text-blue-800 border border-blue-200" : "bg-amber-100 text-amber-800 border border-amber-200"
+              }`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                {item.status || "active"}
+              </span>
+            </div>
+            
+            <div className="mt-3 flex items-center gap-4 min-w-0">
+              {(() => {
+                const imgVal = item.image || item.bannerImage || item.featuredImage || item.url;
+                const imgSrc = typeof imgVal === "object" && imgVal !== null ? (imgVal.url || imgVal.src || "") : imgVal;
+                return imgSrc && typeof imgSrc === "string" && (imgSrc.startsWith("http") || imgSrc.startsWith("data:image")) ? (
+                  <img
+                    src={imgSrc}
+                    onError={(e) => { e.target.onerror = null; e.target.src = "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=750&q=76&fm=webp"; }}
+                    alt={titleOf(item, active)}
+                    className="h-16 w-20 shrink-0 rounded-xl object-cover border border-slate-200 shadow-sm transition hover:scale-105"
+                  />
+                ) : null;
+              })()}
+              <p className="line-clamp-3 text-xs sm:text-sm font-semibold text-slate-600 leading-relaxed flex-1 min-w-0">
+                {item.description || item.quote || item.message || item.excerpt || "No description available for this record."}
+              </p>
+            </div>
+            
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500 font-bold gap-2 min-w-0">
+              <div className="min-w-0">
+                <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Category / Source</span>
+                <span className="truncate block font-bold text-slate-700">{item.category || item.email || item.author || "General Service"}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {active === "messages" && (
+                  <button onClick={() => onReply(item)} className="grid h-9 w-9 place-items-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition" title="Reply">
+                    <FiMail className="text-sm" />
+                  </button>
+                )}
+                {active === "messages" && (
+                  <button onClick={() => onMarkRead(item)} className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition" title="Mark Read">
+                    <FiSave className="text-sm" />
+                  </button>
+                )}
+                {active !== "messages" && (
+                  <Link to={`/admin/${active}/${item.id}/edit`} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-800 hover:text-white transition" title="Edit">
+                    <FiEdit3 className="text-sm" />
+                  </Link>
+                )}
+                <button onClick={() => onDelete(item)} className="grid h-9 w-9 place-items-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition" title="Delete">
+                  <FiTrash2 className="text-sm" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {!filtered.length && (
+          <div className="py-12 text-center text-slate-400 rounded-2xl border border-dashed border-slate-200 bg-white font-semibold">
+            No records found.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 hidden lg:block overflow-x-auto min-w-0 w-full">
         <table className="w-full min-w-[820px] text-left text-sm">
-          <thead className="text-slate-400">
+          <thead className="text-xs font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-200/80">
             <tr>
-              <th className="py-3">Title</th>
-              <th>Status</th>
-              <th>Category / Contact</th>
-              <th>Updated</th>
-              <th className="text-right">Actions</th>
+              <th className="py-3.5 pl-2">Title & Preview</th>
+              <th className="py-3.5">Status</th>
+              <th className="py-3.5">Category / Contact</th>
+              <th className="py-3.5">Last Updated</th>
+              <th className="py-3.5 text-right pr-2">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {filtered.map((item) => (
-              <tr key={item.id} className="border-t border-slate-100 align-top">
-                <td className="max-w-md py-4">
-                  <strong>{titleOf(item, active)}</strong>
-                  <span className="mt-1 block truncate text-slate-400">
-                    {item.description ||
-                      item.quote ||
-                      item.message ||
-                      item.excerpt}
-                  </span>
+              <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
+                <td className="max-w-md py-4 pl-2">
+                  <div className="flex items-center gap-4">
+                    {(() => {
+                      const imgVal = item.image || item.bannerImage || item.featuredImage || item.url;
+                      const imgSrc = typeof imgVal === "object" && imgVal !== null ? (imgVal.url || imgVal.src || "") : imgVal;
+                      return imgSrc && typeof imgSrc === "string" && (imgSrc.startsWith("http") || imgSrc.startsWith("data:image")) ? (
+                        <img
+                          src={imgSrc}
+                          onError={(e) => { e.target.onerror = null; e.target.src = "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=750&q=76&fm=webp"; }}
+                          alt={titleOf(item, active)}
+                          className="h-14 w-18 shrink-0 rounded-[10px] object-cover border border-slate-200 shadow-sm transition group-hover:scale-105"
+                        />
+                      ) : null;
+                    })()}
+                    <div className="min-w-0 flex-1">
+                      <strong className="block font-black text-slate-900 text-base leading-tight break-words">{titleOf(item, active)}</strong>
+                      <span className="mt-1 block line-clamp-2 text-xs font-semibold text-slate-500 leading-relaxed">
+                        {item.description ||
+                          item.quote ||
+                          item.message ||
+                          item.excerpt ||
+                          "No description available"}
+                      </span>
+                    </div>
+                  </div>
                 </td>
                 <td className="py-4">
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${
+                    item.status === "published" || item.status === "read" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                    item.status === "replied" ? "bg-blue-100 text-blue-800 border border-blue-200" : "bg-amber-100 text-amber-800 border border-amber-200"
+                  }`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
                     {item.status || "published"}
                   </span>
                 </td>
-                <td className="py-4">
+                <td className="py-4 font-bold text-slate-700">
                   {item.category ||
                     item.role ||
                     item.email ||
                     activeModule.label}
                 </td>
-                <td className="py-4">{item.updatedAt}</td>
-                <td className="py-3">
+                <td className="py-4 font-bold text-slate-400 text-xs">{item.updatedAt}</td>
+                <td className="py-4 pr-2 text-right">
                   <div className="flex justify-end gap-2">
                     {active === "messages" && (
                       <button
                         onClick={() => onReply(item)}
-                        className="grid h-9 w-9 place-items-center rounded-[8px] border border-slate-200 text-blue-600"
+                        className="grid h-9 w-9 place-items-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"
+                        title="Reply"
                       >
-                        <FiMail />
+                        <FiMail className="text-sm" />
                       </button>
                     )}
                     {active === "messages" && (
                       <button
                         onClick={() => onMarkRead(item)}
-                        className="grid h-9 w-9 place-items-center rounded-[8px] border border-slate-200 text-emerald-600"
+                        className="grid h-9 w-9 place-items-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition"
+                        title="Mark Read"
                       >
-                        <FiSave />
+                        <FiSave className="text-sm" />
                       </button>
                     )}
                     {active !== "messages" && (
                       <Link
                         to={`/admin/${active}/${item.id}/edit`}
-                        className="grid h-9 w-9 place-items-center rounded-[8px] border border-slate-200 text-slate-600"
+                        className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-800 hover:text-white transition"
+                        title="Edit"
                       >
-                        <FiEdit3 />
+                        <FiEdit3 className="text-sm" />
                       </Link>
                     )}
                     <button
                       onClick={() => onDelete(item)}
-                      className="grid h-9 w-9 place-items-center rounded-[8px] border border-slate-200 text-rose-500"
+                      className="grid h-9 w-9 place-items-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition"
+                      title="Delete"
                     >
-                      <FiTrash2 />
+                      <FiTrash2 className="text-sm" />
                     </button>
                   </div>
                 </td>
@@ -1633,7 +2022,7 @@ function ListPage({
             ))}
             {!filtered.length && (
               <tr>
-                <td colSpan="5" className="py-10 text-center text-slate-400">
+                <td colSpan="5" className="py-12 text-center text-slate-400 font-semibold">
                   No records found.
                 </td>
               </tr>
@@ -1685,14 +2074,67 @@ function EditorPage({ active, activeModule, form, mode, onChange, onSave }) {
             "quote",
             "footerText",
           ].includes(field);
+          const isImageField = field.toLowerCase().includes("image") || field === "avatar" || field === "banner";
           const common =
             "rounded-[8px] border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500";
           return (
-            <label key={field} className={large ? "lg:col-span-2" : ""}>
+            <label key={field} className={large || isImageField ? "lg:col-span-2" : ""}>
               <span className="mb-2 block text-xs font-black uppercase tracking-[.14em] text-slate-400">
                 {field}
               </span>
-              {large ? (
+              {isImageField ? (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-[10px] border border-dashed border-slate-300 bg-slate-50/70 hover:border-blue-500 transition-colors">
+                    {(() => {
+                      const currentVal = form[field];
+                      const imgSrc = typeof currentVal === "object" && currentVal !== null ? (currentVal.url || "") : currentVal;
+                      return imgSrc && typeof imgSrc === "string" && (imgSrc.startsWith("http") || imgSrc.startsWith("data:image")) ? (
+                        <div className="relative shrink-0 overflow-hidden rounded-[8px] border border-slate-200 bg-white p-1 shadow-sm">
+                          <img src={imgSrc} alt="Preview" className="h-20 w-28 object-cover rounded-[4px]" />
+                          <span className="block text-[10px] font-bold text-emerald-600 text-center mt-1">✓ Loaded</span>
+                        </div>
+                      ) : (
+                        <div className="flex h-20 w-28 shrink-0 flex-col items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-400">
+                          <FiImage className="text-xl text-slate-300 mb-1" />
+                          <span className="text-[10px] font-semibold">No Image</span>
+                        </div>
+                      );
+                    })()}
+                    <div className="flex-1 min-w-0">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-[8px] bg-white border border-slate-300 px-4 py-2 text-xs font-extrabold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-blue-600 transition-all">
+                        <FiUpload className="text-sm text-blue-600" />
+                        <span>Browse & Upload Local File...</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                onChange(field, e.target.result);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                      <p className="mt-1.5 text-[11px] text-slate-500 font-medium">
+                        Select an image file from your computer to upload directly, or paste a URL below.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="relative flex items-center">
+                    <input
+                      placeholder="Or paste external image link (https://...)"
+                      value={inputValue(typeof form[field] === "object" ? form[field]?.url : form[field])}
+                      onChange={(event) => onChange(field, event.target.value)}
+                      className={`${common} w-full pl-3 pr-4 text-xs font-mono text-slate-600`}
+                    />
+                  </div>
+                </div>
+              ) : large ? (
                 <textarea
                   rows="6"
                   value={inputValue(form[field])}

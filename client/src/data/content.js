@@ -42,7 +42,7 @@ export const services = [
   image: [
     'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=750&q=76&fm=webp',
     'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=750&q=76&fm=webp',
-    'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=750&q=76&fm=webp',
+    'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=750&q=76&fm=webp',
     'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=750&q=76&fm=webp',
     'https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?auto=format&fit=crop&w=750&q=76&fm=webp',
     'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=750&q=76&fm=webp'

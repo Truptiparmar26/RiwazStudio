@@ -14,15 +14,16 @@ export default function PreloadedImage({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const finalSrc = typeof src === 'object' && src !== null ? (src.url || src.src || '') : src;
 
   useEffect(() => {
-    if (!src) return;
+    if (!finalSrc) return;
     setLoaded(false);
     setError(false);
 
     // Check if browser has already cached the image in memory
     const img = new Image();
-    img.src = src;
+    img.src = finalSrc;
     if (img.complete && img.naturalWidth > 0) {
       setLoaded(true);
     } else if (priority) {
@@ -30,7 +31,7 @@ export default function PreloadedImage({
       img.onload = () => setLoaded(true);
       img.onerror = () => setError(true);
     }
-  }, [src, priority]);
+  }, [finalSrc, priority]);
 
   return (
     <div className={`relative overflow-hidden bg-[#101115] ${containerClassName}`} style={style}>
@@ -57,7 +58,7 @@ export default function PreloadedImage({
 
       {/* Actual Rendered Image */}
       <motion.img
-        src={src}
+        src={finalSrc}
         alt={alt}
         className={`${className} ${!loaded ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
         onLoad={() => setLoaded(true)}

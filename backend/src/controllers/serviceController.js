@@ -7,7 +7,13 @@ import { create, list, remove, update } from './crudFactory.js';
 const mapService = async (req) => {
   const payload = { ...req.body };
   if (typeof payload.features === 'string') payload.features = payload.features.split(',').map((item) => item.trim()).filter(Boolean);
-  if (req.file) payload.bannerImage = await uploadToCloudinary(req.file, 'riwaz-studio/services');
+  if (req.file) {
+    payload.bannerImage = await uploadToCloudinary(req.file, 'riwaz-studio/services');
+  } else if (typeof payload.image === 'string' && payload.image.trim()) {
+    payload.bannerImage = { url: payload.image.trim(), publicId: null };
+  } else if (typeof payload.bannerImage === 'string' && payload.bannerImage.trim()) {
+    payload.bannerImage = { url: payload.bannerImage.trim(), publicId: null };
+  }
   return payload;
 };
 

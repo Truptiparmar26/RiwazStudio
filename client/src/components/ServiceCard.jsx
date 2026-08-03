@@ -15,6 +15,7 @@ export default function ServiceCard({ service }) {
           src={service.image}
           alt={service.title}
           loading="lazy"
+          onError={(e) => { e.target.onerror = null; e.target.src = "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=750&q=76&fm=webp"; }}
           className="image-protect h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110 group-hover:rotate-1 filter brightness-95 group-hover:brightness-105"
           onContextMenu={(event) => event.preventDefault()}
         />

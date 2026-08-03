@@ -52,28 +52,33 @@ export default function App() {
       {!isAdminRoute && <ScrollProgress />}
       {!isAdminRoute && <CursorGlow />}
       {!isAdminRoute && <Navbar />}
-      <AnimatePresence mode="wait">
-        <motion.main
-          key={location.pathname}
-          initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, y: -16, filter: 'blur(10px)' }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-        >
-          <Routes location={location}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/before-after" element={<BeforeAfterPage />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/testimonials" element={<Testimonials />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/admin/*" element={<Admin />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </motion.main>
-      </AnimatePresence>
+      {isAdminRoute ? (
+        <Routes location={location}>
+          <Route path="/admin/*" element={<Admin />} />
+        </Routes>
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.main
+            key={location.pathname}
+            initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -16, filter: 'blur(10px)' }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          >
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/before-after" element={<BeforeAfterPage />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/testimonials" element={<Testimonials />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </motion.main>
+        </AnimatePresence>
+      )}
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <WhatsAppButton />}
     </>

@@ -4,7 +4,11 @@ import { create, list, remove, update } from './crudFactory.js';
 
 const mapTestimonial = async (req) => {
   const payload = { ...req.body };
-  if (req.file) payload.image = await uploadToCloudinary(req.file, 'riwaz-studio/testimonials');
+  if (req.file) {
+    payload.image = await uploadToCloudinary(req.file, 'riwaz-studio/testimonials');
+  } else if (typeof payload.image === 'string' && payload.image.trim()) {
+    payload.image = { url: payload.image.trim(), publicId: null };
+  }
   return payload;
 };
 

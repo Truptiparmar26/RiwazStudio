@@ -187,14 +187,14 @@ export default function Gallery() {
                 onContextMenu={(event) => event.preventDefault()}
               />
 
-              <div className="p-6 flex items-center justify-between bg-ink">
+              <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-ink">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-widest text-champagne">{selected.category} Suite</span>
                   <h3 className="font-display text-2xl font-bold text-white mt-0.5">{selected.title}</h3>
                 </div>
                 <a
                   href="/contact"
-                  className="rounded-full bg-champagne px-6 py-2.5 text-xs font-black uppercase text-ink hover:scale-105 transition shadow-[0_0_20px_rgba(244,214,144,0.4)]"
+                  className="w-full sm:w-auto text-center rounded-full bg-champagne px-6 py-2.5 text-xs font-black uppercase text-ink hover:scale-105 transition shadow-[0_0_20px_rgba(244,214,144,0.4)]"
                 >
                   Inquire Similar Grade
                 </a>

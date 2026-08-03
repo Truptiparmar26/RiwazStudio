@@ -37,11 +37,16 @@ export function normalizeRecords(records, type) {
   return records.map((item, index) => {
     const id = item.id || item._id || `${type}-${index + 1}`;
     const updatedAt = getIndianTime(item.updatedAt || item.createdAt, id);
+    const rawImg = item.image || item.bannerImage || item.featuredImage || item.url || '';
+    const imgStr = typeof rawImg === 'object' && rawImg !== null ? (rawImg.url || rawImg.src || '') : (rawImg || '');
     return {
+      ...item,
       id,
       status: item.status || 'published',
       featured: Boolean(item.featured),
-      ...item,
+      image: imgStr || (typeof item.image === 'string' ? item.image : '') || '',
+      bannerImage: imgStr || (typeof item.bannerImage === 'string' ? item.bannerImage : '') || '',
+      featuredImage: imgStr || (typeof item.featuredImage === 'string' ? item.featuredImage : '') || '',
       updatedAt
     };
   });
@@ -50,8 +55,12 @@ export function normalizeRecords(records, type) {
 export function loadCollection(type, fallback = []) {
   try {
     const saved = localStorage.getItem(`${prefix}${type}`);
-    const raw = saved ? JSON.parse(saved) : fallback;
-    return normalizeRecords(Array.isArray(raw) ? raw : fallback, type);
+    let raw = saved ? JSON.parse(saved) : fallback;
+    if (!Array.isArray(raw) || (raw.length === 0 && fallback.length > 0 && type !== 'messages')) {
+      raw = fallback;
+      localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
+    }
+    return normalizeRecords(raw, type);
   } catch {
     return normalizeRecords(fallback, type);
   }

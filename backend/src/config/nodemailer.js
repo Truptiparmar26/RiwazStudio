@@ -1,44 +1,44 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export async function sendEmail({ to, subject, html, text }) {
-  if (!to) return false;
+  if (!to) {
+    throw new Error('No recipient email specified for sendEmail');
+  }
+
   const user = process.env.EMAIL_USER || process.env.SMTP_USER || 'riwazstudioofficial@gmail.com';
-  const pass = (process.env.EMAIL_PASSWORD || process.env.SMTP_PASS || 'hbmdbfnblnbhleum').replace(/\s+/g, '');
-  const from = process.env.MAIL_FROM || `"Riwaz Studio Admin" <${user}>`;
+  const rawPass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || process.env.SMTP_PASS || '';
+  const pass = rawPass.replace(/\s+/g, '');
+  const from = process.env.MAIL_FROM || `"Riwaz Studio" <${user}>`;
 
-  // 1. First attempt: RFC-standard Port 587 with STARTTLS (Preferred for Gmail on desktop networks)
-  try {
-    const transporter587 = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: { user, pass },
-      tls: { rejectUnauthorized: false }
-    });
-    await transporter587.sendMail({ from, to, subject, html, text });
-    console.log(`\n✅ [EMAIL DISPATCH SUCCESS] Delivered directly to ${to} via SMTP Port 587 (STARTTLS)\n`);
-    return true;
-  } catch (err587) {
-    console.warn(`⚠️ [SMTP Port 587 Attempt Failed: ${err587.message}]. Retrying via Port 465 (SMTPS SSL)...`);
+  if (!user || !pass) {
+    console.error('❌ [SMTP ERROR] Email credentials (EMAIL_USER or EMAIL_PASS) not found in environment variables.');
+    throw new Error('SMTP credentials missing in environment');
+  }
 
-    // 2. Second attempt: Direct SSL on Port 465
-    try {
-      const transporter465 = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: { user, pass },
-        tls: { rejectUnauthorized: false }
-      });
-      await transporter465.sendMail({ from, to, subject, html, text });
-      console.log(`\n✅ [EMAIL DISPATCH SUCCESS] Delivered directly to ${to} via SMTP Port 465 (SSL)\n`);
-      return true;
-    } catch (err465) {
-      console.error(`\n❌ [SMTP DELIVERY FAILED ON ALL PORTS]\nPort 587 Error: ${err587.message}\nPort 465 Error: ${err465.message}\n`);
-
-      // 3. Guaranteed Local Emulation Fallback so admin authentication GUI workflows are never blocked by local ISP restrictions
-      console.log(`\n======================================================\n🛡️ [EMULATION MODE ACTIVE] Live OTP Security Details:\nTarget: ${to}\nSubject: ${subject}\n\nMessage Body:\n${text}\n======================================================\n`);
-      return true;
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER || user,
+      pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : pass
     }
+  });
+
+  try {
+    const info = await transporter.sendMail({ from, to, subject, html, text });
+    console.log(`\n✅ [EMAIL DISPATCH SUCCESS] Delivered directly to ${to} via Gmail SMTP (Port 465 SSL). MessageID: ${info.messageId || 'sent'}\n`);
+    return true;
+  } catch (error) {
+    // Safely log error without exposing sensitive credentials
+    console.error(`\n❌ [SMTP DELIVERY FAILED] Could not deliver email to ${to}. Error: ${error.message}\n`);
+    throw error;
   }
 }

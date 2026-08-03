@@ -28,7 +28,8 @@ export async function login(req, res, next) {
     const defaultPassword = process.env.ADMIN_PASSWORD || 'Trutuu.@2612';
 
     if (mongoose.connection.readyState !== 1) {
-      if (email === defaultEmail && password === defaultPassword) {
+      const validOfflinePwd = password === defaultPassword || (customOfflinePassword && password === customOfflinePassword);
+      if (email === defaultEmail && validOfflinePwd) {
         const fallbackAdmin = { _id: 'local-admin', name: 'Riwaz Admin', email, role: 'admin' };
         const accessToken = generateAccessToken(fallbackAdmin);
         const refreshToken = generateRefreshToken(fallbackAdmin);
@@ -38,9 +39,23 @@ export async function login(req, res, next) {
       throw new ApiError(401, 'Invalid executive credentials or database offline');
     }
 
-    const admin = await Admin.findOne({ email, role: 'admin' }).select('+password');
+    let admin = await Admin.findOne({ email, role: 'admin' }).select('+password') || await Admin.findOne({ role: 'admin' }).select('+password') || await Admin.findOne().select('+password');
+    if (!admin && email === defaultEmail) {
+      admin = await Admin.create({
+        name: 'Riwaz Admin',
+        email: defaultEmail,
+        password: await bcrypt.hash(defaultPassword, 12),
+        role: 'admin'
+      });
+    }
     if (!admin) throw new ApiError(401, 'Invalid admin credentials');
-    const valid = await bcrypt.compare(password, admin.password);
+
+    let valid = await bcrypt.compare(password, admin.password);
+    if (!valid && customOfflinePassword && password === customOfflinePassword) {
+      admin.password = await bcrypt.hash(password, 12);
+      await admin.save();
+      valid = true;
+    }
     if (!valid) throw new ApiError(401, 'Invalid admin credentials');
 
     const accessToken = generateAccessToken(admin);
@@ -83,25 +98,57 @@ export async function logout(req, res, next) {
 }
 
 const offlineOtpStorage = new Map();
+let customOfflinePassword = null;
 
 async function sendOtpEmail(to, otp) {
-  const subject = "Riwaz Studio Admin Password Reset OTP";
+  const subject = "Riwaz Studio - Password Reset OTP";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b;">
       <h2 style="color: #111029; font-size: 24px; font-weight: bold; margin-bottom: 6px;">Riwaz Studio</h2>
-      <h3 style="color: #2054f4; font-size: 18px; margin-top: 0; margin-bottom: 24px;">Admin Password Reset</h3>
+      <h3 style="color: #2054f4; font-size: 18px; margin-top: 0; margin-bottom: 24px;">Password Reset Verification</h3>
       <p style="color: #475569; font-size: 16px; line-height: 1.6;">Hello Admin,<br/><br/>We received a request to reset your Riwaz Studio Admin Panel password.<br/><br/>Your verification code is:</p>
       <div style="margin: 28px 0; background-color: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 10px; padding: 18px; text-align: center;">
         <span style="font-size: 34px; font-weight: 900; letter-spacing: 8px; color: #111029;">${otp}</span>
       </div>
-      <p style="color: #475569; font-size: 15px; line-height: 1.6;">This OTP is valid for <strong>5 minutes</strong>.<br/><br/>For security reasons, do not share this OTP with anyone.<br/>If you did not request a password reset, please ignore this email.</p>
+      <p style="color: #475569; font-size: 15px; line-height: 1.6;">This OTP will expire in 5 minutes.<br/><br/>For security reasons, do not share this OTP with anyone.<br/>If you did not request a password reset, please ignore this email.</p>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;" />
       <p style="color: #64748b; font-size: 14px; margin: 0;">Regards,<br/><strong>Riwaz Studio Admin Team</strong></p>
     </div>
   `;
-  const text = `Riwaz Studio\nAdmin Password Reset\n\nHello Admin,\n\nWe received a request to reset your Riwaz Studio Admin Panel password.\n\nYour verification code is: ${otp}\n\nThis OTP is valid for 5 minutes.\nFor security reasons, do not share this OTP with anyone.\nIf you did not request a password reset, please ignore this email.\n\nRegards,\nRiwaz Studio Admin Team`;
+  const text = `Riwaz Studio\nPassword Reset Verification\n\nYour verification code is: ${otp}\n\nThis OTP will expire in 5 minutes.\nFor security reasons, do not share this OTP with anyone.\nIf you did not request a password reset, please ignore this email.\n\nRegards,\nRiwaz Studio Admin Team`;
 
   await sendEmail({ to, subject, html, text });
+}
+
+async function sendResetConfirmationEmail(to) {
+  const subject = "Riwaz Studio - Password Reset Successful";
+  const now = new Date();
+  const dateStr = now.toLocaleString('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  });
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; color: #1e293b; box-shadow: 0 10px 25px rgba(17,16,41,0.05);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #111029; font-size: 26px; font-weight: 900; margin: 0; letter-spacing: 1px;">Riwaz Studio</h2>
+        <p style="color: #64748b; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px;">Executive Admin Security</p>
+      </div>
+      <h3 style="color: #10b981; font-size: 20px; text-align: center; margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f1f5f9;">Password Reset Successful</h3>
+      <p style="color: #334155; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">Hello Admin,<br/><br/>Your admin password has been successfully reset.</p>
+      <p style="color: #334155; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">Your account is now secured with your new password.</p>
+      <div style="background-color: #f8fafc; border-left: 4px solid #10b981; padding: 16px; border-radius: 4px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; color: #475569; font-size: 14px;"><strong>Reset Date &amp; Time:</strong> ${dateStr}</p>
+        <p style="margin: 0; color: #475569; font-size: 14px;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">Successful</span></p>
+      </div>
+      <p style="color: #ef4444; font-size: 15px; font-weight: bold; line-height: 1.6; background-color: #fef2f2; padding: 12px 16px; border-radius: 8px; border: 1px solid #fee2e2;">If you did not perform this password reset, please contact the website administrator immediately.</p>
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 28px 0;" />
+      <p style="color: #64748b; font-size: 14px; margin: 0; text-align: center;">Regards,<br/><strong>Riwaz Studio Security Team</strong></p>
+    </div>
+  `;
+  const text = `Riwaz Studio\n\nPassword Reset Successful\n\nYour admin password has been successfully reset.\n\nYour account is now secured with your new password.\n\nReset Date & Time: ${dateStr}\nStatus: Successful\n\nIf you did not perform this password reset, please contact the website administrator immediately.\n\nRegards,\nRiwaz Studio Security Team`;
+
+  await sendEmail({ to: 'riwazstudioofficial@gmail.com', subject, html, text });
 }
 
 export async function forgotPassword(req, res, next) {
@@ -111,7 +158,7 @@ export async function forgotPassword(req, res, next) {
 
     const defaultAdminEmail = 'riwazstudioofficial@gmail.com';
     if (email !== defaultAdminEmail) {
-      throw new ApiError(403, 'Unauthorized access! Password recovery is strictly restricted to the registered Riwaz Studio admin email (riwazstudioofficial@gmail.com).');
+      return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
     }
 
     const otp = crypto.randomInt(100000, 1000000).toString();
@@ -139,7 +186,7 @@ export async function forgotPassword(req, res, next) {
       throw new ApiError(500, `Failed to send OTP to ${targetEmail}: ${mailError.message || 'Email delivery failed'}`);
     }
 
-    return ApiResponse.ok(res, 'Verification OTP sent to your registered admin email address.');
+    return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
   } catch (error) {
     next(error);
   }
@@ -152,7 +199,7 @@ export async function resendOtp(req, res, next) {
 
     const defaultAdminEmail = 'riwazstudioofficial@gmail.com';
     if (email !== defaultAdminEmail) {
-      throw new ApiError(403, 'Unauthorized access! Password recovery is strictly restricted to the registered Riwaz Studio admin email.');
+      return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
     }
 
     const otp = crypto.randomInt(100000, 1000000).toString();
@@ -180,7 +227,7 @@ export async function resendOtp(req, res, next) {
       throw new ApiError(500, `Failed to resend OTP to ${targetEmail}: ${mailError.message || 'Email delivery failed'}`);
     }
 
-    return ApiResponse.ok(res, 'New OTP sent successfully.');
+    return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
   } catch (error) {
     next(error);
   }
@@ -193,7 +240,7 @@ export async function verifyOtp(req, res, next) {
     if (!email || !otp) throw new ApiError(400, 'Email and verification code are required.');
 
     if (email !== 'riwazstudioofficial@gmail.com') {
-      throw new ApiError(403, 'Unauthorized access! OTP verification is restricted exclusively to the official Riwaz Studio admin.');
+      throw new ApiError(400, 'Incorrect verification code or expired session. Please try again.');
     }
 
     const submittedHash = crypto.createHash('sha256').update(otp).digest('hex');
@@ -266,30 +313,56 @@ export async function resetPassword(req, res, next) {
         throw new ApiError(401, 'Invalid or expired password reset session. Please verify OTP again.');
       }
       offlineOtpStorage.delete(email);
-      return ApiResponse.ok(res, 'Your admin password has been updated successfully.');
+      customOfflinePassword = newPassword;
+      await sendResetConfirmationEmail(email || 'riwazstudioofficial@gmail.com').catch(e => console.error('Failed to send reset confirmation email:', e.message));
+      return ApiResponse.ok(res, 'Password reset successfully. You can now login with your new password.');
     }
 
-    const otpDoc = await AdminOtp.findOne({ resetTokenHash: tokenHash, verified: true });
-    if (!otpDoc || otpDoc.expiresAt < new Date()) {
+    let otpDoc = await AdminOtp.findOne({ resetTokenHash: tokenHash, verified: true });
+    let usingOffline = false;
+    if (!otpDoc && offlineOtpStorage.has(email)) {
+      const rec = offlineOtpStorage.get(email);
+      if (rec && rec.verified && rec.resetTokenHash === tokenHash) {
+        otpDoc = rec;
+        usingOffline = true;
+      }
+    }
+
+    if (!otpDoc || (!usingOffline && otpDoc.expiresAt < new Date())) {
       throw new ApiError(401, 'Invalid or expired password reset session. Please verify OTP again.');
     }
 
-    let admin = await Admin.findOne({ email: otpDoc.email }) || await Admin.findOne({ role: 'admin' });
-    if (!admin) {
-      admin = await Admin.findOne();
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    let admins = await Admin.find({ role: 'admin' });
+    if (admins.length === 0) {
+      admins = await Admin.find();
     }
-    if (admin) {
-      admin.password = await bcrypt.hash(newPassword, 12);
-      admin.resetPasswordToken = undefined;
-      admin.resetPasswordExpires = undefined;
-      admin.tokenVersion += 1;
-      await admin.save();
+    if (admins.length === 0) {
+      await Admin.create({
+        name: 'Riwaz Admin',
+        email: otpDoc?.email || email || 'riwazstudioofficial@gmail.com',
+        role: 'admin',
+        password: hashedPassword
+      });
+    } else {
+      for (const adm of admins) {
+        adm.password = hashedPassword;
+        adm.resetPasswordToken = undefined;
+        adm.resetPasswordExpires = undefined;
+        adm.tokenVersion = (adm.tokenVersion || 0) + 1;
+        await adm.save();
+      }
     }
 
-    await AdminOtp.deleteMany({ email: otpDoc.email });
-    if (offlineOtpStorage.has(otpDoc.email)) offlineOtpStorage.delete(otpDoc.email);
+    customOfflinePassword = newPassword;
 
-    return ApiResponse.ok(res, 'Your admin password has been updated successfully.');
+    if (!usingOffline && otpDoc.email) await AdminOtp.deleteMany({ email: otpDoc.email });
+    if (otpDoc.email && offlineOtpStorage.has(otpDoc.email)) offlineOtpStorage.delete(otpDoc.email);
+
+    const recipientEmail = otpDoc?.email || email || 'riwazstudioofficial@gmail.com';
+    await sendResetConfirmationEmail(recipientEmail).catch(e => console.error('Failed to send reset confirmation email:', e.message));
+
+    return ApiResponse.ok(res, 'Password reset successfully. You can now login with your new password.');
   } catch (error) {
     next(error);
   }
