@@ -9,8 +9,9 @@ import Testimonial from '../models/Testimonial.js';
 export default async function connectDatabase() {
   try {
     mongoose.set('bufferCommands', false);
-    await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 3000 });
-    console.log('MongoDB connected');
+    const connectionUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+    await mongoose.connect(connectionUri, { serverSelectionTimeoutMS: 10000 });
+    console.log('MongoDB connected successfully to cloud cluster');
     await seedAdmin();
     await seedContent();
   } catch (error) {
