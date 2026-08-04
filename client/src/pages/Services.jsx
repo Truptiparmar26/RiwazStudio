@@ -26,10 +26,10 @@ import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import Reveal from '../components/Reveal.jsx';
 import ServiceCard from '../components/ServiceCard.jsx';
 import { services } from '../data/content.js';
-import { useStoredCollection } from '../utils/siteStore.js';
+import { useApiCollection } from '../utils/siteStore.js';
 
 export default function Services() {
-  const serviceItems = useStoredCollection('services', services);
+  const { items: serviceItems, loading, error, refetch } = useApiCollection('services', services, { onlyActive: true });
 
   return (
     <>
@@ -52,8 +52,31 @@ export default function Services() {
             </div>
           </motion.div>
 
+          {loading && serviceItems.length === 0 && (
+            <div className="mt-20 flex flex-col items-center justify-center py-16 text-white/60">
+              <span className="h-10 w-10 animate-spin rounded-full border-2 border-champagne border-t-transparent" />
+              <p className="mt-4 text-sm font-bold uppercase tracking-widest text-champagne">Loading services...</p>
+            </div>
+          )}
+
+          {error && serviceItems.length === 0 && (
+            <div className="mt-16 text-center text-white/60 py-20 border border-dashed border-red-500/30 rounded-[16px] bg-red-500/5">
+              <p className="font-display text-2xl text-white/80">Unable to load services from server.</p>
+              <p className="mt-2 text-sm text-white/50">{error}</p>
+              <button onClick={refetch} className="mt-6 rounded-full bg-champagne px-6 py-2 text-xs font-bold text-black uppercase">
+                Retry Loading
+              </button>
+            </div>
+          )}
+
+          {!loading && serviceItems.length === 0 && !error && (
+            <div className="mt-16 text-center text-white/60 py-20 border border-dashed border-white/15 rounded-[16px]">
+              <p className="font-display text-2xl text-white/80">No active services currently available.</p>
+            </div>
+          )}
+
           <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {serviceItems.filter((service) => service.status !== 'draft').map((service, index) => (
+            {serviceItems.map((service, index) => (
               <motion.div 
                 key={service.id || service.title} 
                 className="service-card-3d"

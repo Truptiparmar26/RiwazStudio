@@ -9,8 +9,22 @@ export function list(Model, defaultSort = { createdAt: -1 }) {
       const { page, limit, skip } = getPagination(req.query);
       const query = {};
       if (req.query.status) query.status = req.query.status;
-      if (req.query.category) query.category = req.query.category;
+      if (req.query.category && req.query.category !== 'All') query.category = req.query.category;
       if (req.query.featured) query.featured = req.query.featured === 'true';
+      if (req.query.isActive !== undefined) {
+        if (req.query.isActive === 'true') {
+          query.$or = [{ isActive: true }, { status: 'published' }, { isActive: { $exists: false }, status: { $ne: 'draft' } }];
+        } else {
+          query.$or = [{ isActive: false }, { status: 'draft' }];
+        }
+      }
+      if (req.query.isPublished !== undefined) {
+        if (req.query.isPublished === 'true') {
+          query.$or = [{ isPublished: true }, { status: 'published' }, { isPublished: { $exists: false }, status: { $ne: 'draft' } }];
+        } else {
+          query.$or = [{ isPublished: false }, { status: 'draft' }];
+        }
+      }
       if (req.query.search) query.$text = { $search: req.query.search };
       const [items, total] = await Promise.all([
         Model.find(query).sort(defaultSort).skip(skip).limit(limit).lean(),

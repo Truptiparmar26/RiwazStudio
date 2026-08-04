@@ -27,6 +27,7 @@ import {
   FiStar,
   FiTrash2,
   FiUpload,
+  FiUser,
   FiUsers,
   FiX,
 } from "react-icons/fi";
@@ -35,6 +36,7 @@ import { blogs, gallery, services, testimonials } from "../data/content.js";
 import {
   deleteRecord,
   loadCollection,
+  mergeWithLocal,
   normalizeRecords,
   saveCollection,
   upsertRecord,
@@ -62,6 +64,7 @@ const modules = [
     icon: FiMessageSquare,
     endpoint: "/api/contact",
   },
+  { key: "about", label: "About & Editor", icon: FiUser },
   { key: "settings", label: "Settings", icon: FiSettings },
 ];
 
@@ -79,6 +82,22 @@ const fallback = {
     status: "published",
   })),
   messages: [],
+  about: [
+    {
+      id: "about-editor",
+      title: "Riwaz Studio",
+      name: "Riwaz Studio",
+      role: "Creative Photo Editor",
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+      bio: "Behind every beautifully edited photograph is a vision, attention to detail, and a passion for creativity. At Riwaz Studio, every image is carefully refined to preserve its natural emotion while enhancing its visual impact.\n\nFrom portrait retouching and color correction to creative photo manipulation and professional enhancements, the goal is simple — to make every photograph look its absolute best.",
+      personalStatement: "I believe great editing is not about changing a photograph completely — it is about bringing out the beauty that is already there.",
+      quote: "Every photograph has a story.\nMy job is to make that story unforgettable.",
+      expertise: "Portrait Retouching, Color Correction, Photo Manipulation, Background Removal, Wedding & Event Editing, Creative Photo Enhancement",
+      ctaHeading: "Have a Photo That Deserves More?",
+      ctaText: "Let’s transform your photographs into visuals you’ll love to share and remember.",
+      status: "published",
+    },
+  ],
   settings: [
     {
       id: "settings",
@@ -98,15 +117,20 @@ const blank = {
     image: "",
     description: "",
     tags: "",
+    order: 0,
     status: "published",
+    isActive: true,
   },
   services: {
     title: "",
+    shortDescription: "",
     price: "",
     image: "",
     description: "",
     features: "",
+    order: 0,
     status: "published",
+    isActive: true,
   },
   blogs: {
     title: "",
@@ -114,15 +138,23 @@ const blank = {
     image: "",
     excerpt: "",
     content: "",
+    readTime: 3,
+    order: 0,
     status: "published",
+    isActive: true,
   },
   testimonials: {
     title: "",
     name: "",
+    designation: "",
     role: "",
+    profileImage: "",
     quote: "",
+    message: "",
     rating: 5,
+    order: 0,
     status: "published",
+    isActive: true,
   },
   messages: {
     name: "",
@@ -143,6 +175,20 @@ const blank = {
     footerText: "",
     status: "published",
   },
+  about: {
+    id: "about-editor",
+    title: "Riwaz Studio",
+    name: "Riwaz Studio",
+    role: "Creative Photo Editor",
+    image: "",
+    bio: "",
+    personalStatement: "",
+    quote: "",
+    expertise: "",
+    ctaHeading: "",
+    ctaText: "",
+    status: "published",
+  },
 };
 
 const chartBars = [44, 68, 52, 86, 74, 96, 62, 78];
@@ -153,18 +199,22 @@ function moduleByKey(key) {
 
 function titleOf(item, type) {
   if (type === "messages") return item.subject || item.name || "Message";
-  if (type === "testimonials") return item.name || item.title;
+  if (type === "testimonials") return item.name || item.clientName || item.title || "Client Review";
+  if (type === "about") return item.name || item.title || "Editor Profile";
   return item.title || item.name || "Untitled";
 }
 
 function normalizeForSave(type, form) {
-  const rawImg = form.image || form.bannerImage || form.featuredImage || form.url || "";
+  const rawImg = form.image || form.bannerImage || form.featuredImage || form.profileImage || form.url || "";
   const imgStr = typeof rawImg === "object" && rawImg !== null ? (rawImg.url || rawImg.src || "") : (rawImg || "");
   const base = {
     ...form,
     image: imgStr || (typeof form.image === "string" ? form.image : "") || "",
     bannerImage: imgStr || (typeof form.bannerImage === "string" ? form.bannerImage : "") || "",
     featuredImage: imgStr || (typeof form.featuredImage === "string" ? form.featuredImage : "") || "",
+    profileImage: imgStr || (typeof form.profileImage === "string" ? form.profileImage : "") || "",
+    order: Number(form.order ?? form.sortOrder ?? form.displayOrder ?? 0),
+    isActive: form.status !== "draft" && form.isActive !== false,
   };
 
   if (type === "services" && typeof base.features === "string") {
@@ -188,8 +238,22 @@ function normalizeForSave(type, form) {
   if (type === "testimonials") {
     return {
       ...base,
-      title: base.name || base.title,
+      title: base.name || base.clientName || base.title,
+      name: base.name || base.clientName || base.title,
+      clientName: base.clientName || base.name || base.title,
+      role: base.role || base.designation || base.profession,
+      designation: base.designation || base.role || base.profession,
+      quote: base.quote || base.message || base.review,
+      message: base.message || base.quote || base.review,
       rating: Number(base.rating || 5),
+    };
+  }
+  if (type === "about") {
+    return {
+      ...base,
+      title: base.name || base.title || "Riwaz Studio",
+      name: base.name || base.title || "Riwaz Studio",
+      role: base.role || "Creative Photo Editor",
     };
   }
   return base;
@@ -1049,7 +1113,7 @@ export default function Admin() {
             const json = await res.json();
             const serverItems = json.data?.items || json.data || [];
             if (Array.isArray(serverItems) && (serverItems.length > 0 || key === "messages")) {
-              const normalized = normalizeRecords(serverItems, key);
+              const normalized = mergeWithLocal(key, serverItems, fallback[key]);
               updated[key] = normalized;
               saveCollection(key, normalized);
             }
@@ -1836,14 +1900,60 @@ function ListPage({
   onMarkRead,
   onReply,
 }) {
+  const [confirmItem, setConfirmItem] = useState(null);
+
   return (
-    <div className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-[8px] border border-slate-200 bg-white p-5 shadow-sm relative">
+      <AnimatePresence>
+        {confirmItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100"
+            >
+              <div className="flex items-center gap-3 text-rose-600">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-rose-50 border border-rose-100 text-2xl">
+                  <FiTrash2 />
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Confirm Deletion</h3>
+                  <p className="text-xs font-semibold text-slate-500">This action is permanent and cannot be undone.</p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm font-medium text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+                Are you sure you want to delete <strong className="font-bold text-slate-900">{titleOf(confirmItem, active)}</strong>? It will be immediately removed from both the admin portal and the live public website.
+              </p>
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setConfirmItem(null)}
+                  className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const item = confirmItem;
+                    setConfirmItem(null);
+                    onDelete(item);
+                  }}
+                  className="rounded-xl bg-rose-600 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-rose-500/25 hover:bg-rose-700 transition"
+                >
+                  Yes, Delete Immediately
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h2 className="text-xl font-extrabold">{activeModule.label}</h2>
           <p className="text-sm text-slate-500">
-            Add, edit, delete, search, and publish records from separate admin
-            pages.
+            Add, edit, delete, search, and publish records from separate admin pages.
           </p>
         </div>
         {active !== "messages" && (
@@ -1873,7 +1983,7 @@ function ListPage({
             
             <div className="mt-3 flex items-center gap-4 min-w-0">
               {(() => {
-                const imgVal = item.image || item.bannerImage || item.featuredImage || item.url;
+                const imgVal = item.image || item.bannerImage || item.featuredImage || item.profileImage || item.url;
                 const imgSrc = typeof imgVal === "object" && imgVal !== null ? (imgVal.url || imgVal.src || "") : imgVal;
                 return imgSrc && typeof imgSrc === "string" && (imgSrc.startsWith("http") || imgSrc.startsWith("data:image")) ? (
                   <img
@@ -1910,7 +2020,7 @@ function ListPage({
                     <FiEdit3 className="text-sm" />
                   </Link>
                 )}
-                <button onClick={() => onDelete(item)} className="grid h-9 w-9 place-items-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition" title="Delete">
+                <button onClick={() => setConfirmItem(item)} className="grid h-9 w-9 place-items-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition" title="Delete">
                   <FiTrash2 className="text-sm" />
                 </button>
               </div>
@@ -1929,7 +2039,7 @@ function ListPage({
           <thead className="text-xs font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-200/80">
             <tr>
               <th className="py-3.5 pl-2">Title & Preview</th>
-              <th className="py-3.5">Status</th>
+              <th className="py-3.5">Status & Order</th>
               <th className="py-3.5">Category / Contact</th>
               <th className="py-3.5">Last Updated</th>
               <th className="py-3.5 text-right pr-2">Actions</th>
@@ -1941,7 +2051,7 @@ function ListPage({
                 <td className="max-w-md py-4 pl-2">
                   <div className="flex items-center gap-4">
                     {(() => {
-                      const imgVal = item.image || item.bannerImage || item.featuredImage || item.url;
+                      const imgVal = item.image || item.bannerImage || item.featuredImage || item.profileImage || item.url;
                       const imgSrc = typeof imgVal === "object" && imgVal !== null ? (imgVal.url || imgVal.src || "") : imgVal;
                       return imgSrc && typeof imgSrc === "string" && (imgSrc.startsWith("http") || imgSrc.startsWith("data:image")) ? (
                         <img
@@ -1965,21 +2075,29 @@ function ListPage({
                   </div>
                 </td>
                 <td className="py-4">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${
-                    item.status === "published" || item.status === "read" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
-                    item.status === "replied" ? "bg-blue-100 text-blue-800 border border-blue-200" : "bg-amber-100 text-amber-800 border border-amber-200"
-                  }`}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
-                    {item.status || "published"}
-                  </span>
+                  <div className="flex flex-col items-start gap-1">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider shadow-2xs ${
+                      item.status === "published" || item.status === "read" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                      item.status === "replied" ? "bg-blue-100 text-blue-800 border border-blue-200" : "bg-amber-100 text-amber-800 border border-amber-200"
+                    }`}>
+                      <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                      {item.status || "published"}
+                    </span>
+                    {item.order !== undefined && (
+                      <span className="text-[11px] font-extrabold text-slate-400 pl-1">
+                        Order: {item.order}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="py-4 font-bold text-slate-700">
                   {item.category ||
                     item.role ||
+                    item.designation ||
                     item.email ||
                     activeModule.label}
                 </td>
-                <td className="py-4 font-bold text-slate-400 text-xs">{item.updatedAt}</td>
+                <td className="py-4 font-bold text-slate-400 text-xs">{item.updatedAt || "Recent"}</td>
                 <td className="py-4 pr-2 text-right">
                   <div className="flex justify-end gap-2">
                     {active === "messages" && (
@@ -2010,7 +2128,7 @@ function ListPage({
                       </Link>
                     )}
                     <button
-                      onClick={() => onDelete(item)}
+                      onClick={() => setConfirmItem(item)}
                       className="grid h-9 w-9 place-items-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition"
                       title="Delete"
                     >
@@ -2049,18 +2167,18 @@ function EditorPage({ active, activeModule, form, mode, onChange, onSave }) {
             {mode === "edit" ? "Edit" : "Add"} {activeModule.label}
           </h2>
           <p className="text-sm text-slate-500">
-            This is a separate admin page with sidebar layout.
+            Configure record details, order, and publishing status.
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             to={`/admin/${active}`}
-            className="rounded-[8px] border border-slate-200 px-5 py-3 font-bold text-slate-600"
+            className="rounded-[8px] border border-slate-200 px-5 py-3 font-bold text-slate-600 hover:bg-slate-50 transition"
           >
             Cancel
           </Link>
-          <button className="inline-flex items-center gap-2 rounded-[8px] bg-[#246bfe] px-5 py-3 font-extrabold text-white shadow-lg shadow-blue-500/20">
-            <FiUpload /> Save
+          <button type="submit" className="inline-flex items-center gap-2 rounded-[8px] bg-[#246bfe] px-5 py-3 font-extrabold text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition">
+            <FiUpload /> Save & Publish
           </button>
         </div>
       </div>
@@ -2073,14 +2191,23 @@ function EditorPage({ active, activeModule, form, mode, onChange, onSave }) {
             "content",
             "quote",
             "footerText",
+            "shortDescription",
+            "features",
+            "tags",
+            "bio",
+            "personalStatement",
+            "expertise",
+            "ctaText",
           ].includes(field);
           const isImageField = field.toLowerCase().includes("image") || field === "avatar" || field === "banner";
+          const isNumberField = ["order", "rating", "readTime", "sortOrder"].includes(field);
           const common =
-            "rounded-[8px] border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500";
+            "rounded-[8px] border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 transition-colors font-semibold text-slate-800";
+          
           return (
             <label key={field} className={large || isImageField ? "lg:col-span-2" : ""}>
               <span className="mb-2 block text-xs font-black uppercase tracking-[.14em] text-slate-400">
-                {field}
+                {field === "order" ? "Display Order (Low numerical values appear first)" : field}
               </span>
               {isImageField ? (
                 <div className="space-y-3">
@@ -2134,9 +2261,44 @@ function EditorPage({ active, activeModule, form, mode, onChange, onSave }) {
                     />
                   </div>
                 </div>
+              ) : field === "status" ? (
+                <select
+                  value={form[field] || "published"}
+                  onChange={(event) => {
+                    const newStatus = event.target.value;
+                    onChange(field, newStatus);
+                    if (form.isActive !== undefined) {
+                      onChange("isActive", newStatus === "published");
+                    }
+                  }}
+                  className={`${common} w-full font-bold text-slate-800 cursor-pointer`}
+                >
+                  <option value="published">Published (Visible online)</option>
+                  <option value="draft">Draft (Hidden online)</option>
+                </select>
+              ) : field === "isActive" ? (
+                <select
+                  value={form[field] !== false ? "true" : "false"}
+                  onChange={(event) => {
+                    const val = event.target.value === "true";
+                    onChange(field, val);
+                    onChange("status", val ? "published" : "draft");
+                  }}
+                  className={`${common} w-full font-bold cursor-pointer ${form[field] !== false ? "text-emerald-700 bg-emerald-50/50 border-emerald-300" : "text-amber-700 bg-amber-50/50 border-amber-300"}`}
+                >
+                  <option value="true">✓ Active (Display on Public Site)</option>
+                  <option value="false">✕ Inactive (Hidden from Public Site)</option>
+                </select>
+              ) : isNumberField ? (
+                <input
+                  type="number"
+                  value={form[field] !== undefined ? form[field] : ""}
+                  onChange={(event) => onChange(field, event.target.value ? Number(event.target.value) : 0)}
+                  className={`${common} w-full`}
+                />
               ) : large ? (
                 <textarea
-                  rows="6"
+                  rows="5"
                   value={inputValue(form[field])}
                   onChange={(event) => onChange(field, event.target.value)}
                   className={`${common} w-full resize-none`}

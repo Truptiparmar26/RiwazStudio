@@ -10,8 +10,8 @@ const router = express.Router();
 
 router.get('/', getGallery);
 router.get('/:id', getGalleryById);
-router.post('/', protect, adminOnly, upload.single('image'), [body('title').isLength({ min: 2, max: 140 })], validate, createGallery);
-router.put('/:id', protect, adminOnly, upload.single('image'), validate, updateGallery);
+router.post('/', protect, adminOnly, upload.any(), [body('title').optional().isString()], validate, createGallery);
+router.put('/:id', protect, adminOnly, upload.any(), validate, updateGallery);
 router.delete('/:id', protect, adminOnly, deleteGallery);
 
 export default router;

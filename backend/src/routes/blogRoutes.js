@@ -10,8 +10,8 @@ const router = express.Router();
 
 router.get('/', getBlogs);
 router.get('/:slug', getBlogBySlug);
-router.post('/', protect, adminOnly, upload.single('featuredImage'), [body('title').isLength({ min: 2, max: 170 }), body('content').isLength({ min: 20 })], validate, createBlog);
-router.put('/:id', protect, adminOnly, upload.single('featuredImage'), validate, updateBlog);
+router.post('/', protect, adminOnly, upload.any(), [body('title').optional().isString()], validate, createBlog);
+router.put('/:id', protect, adminOnly, upload.any(), validate, updateBlog);
 router.delete('/:id', protect, adminOnly, deleteBlog);
 
 export default router;

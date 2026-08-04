@@ -11,6 +11,7 @@ import About from './pages/About.jsx';
 import Admin from './pages/Admin.jsx';
 import BeforeAfterPage from './pages/BeforeAfterPage.jsx';
 import Blog from './pages/Blog.jsx';
+import BlogDetail from './pages/BlogDetail.jsx';
 import Contact from './pages/Contact.jsx';
 import Gallery from './pages/Gallery.jsx';
 import Home from './pages/Home.jsx';
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/before-after" element={<BeforeAfterPage />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogDetail />} />
               <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="*" element={<NotFound />} />

@@ -6,13 +6,13 @@ import HeroScene from '../components/HeroScene.jsx';
 import Reveal from '../components/Reveal.jsx';
 import ServiceCard from '../components/ServiceCard.jsx';
 import { blogs, gallery, heroTags, services, stats, testimonials } from '../data/content.js';
-import { useStoredCollection } from '../utils/siteStore.js';
+import { useApiCollection } from '../utils/siteStore.js';
 
 export default function Home() {
-  const serviceItems = useStoredCollection('services', services).filter((item) => item.status !== 'draft');
-  const galleryItems = useStoredCollection('gallery', gallery).filter((item) => item.status !== 'draft');
-  const blogItems = useStoredCollection('blogs', blogs).filter((item) => item.status !== 'draft');
-  const testimonialItems = useStoredCollection('testimonials', testimonials).filter((item) => item.status !== 'draft');
+  const { items: serviceItems } = useApiCollection('services', services, { onlyActive: true });
+  const { items: galleryItems } = useApiCollection('gallery', gallery, { onlyActive: true });
+  const { items: blogItems } = useApiCollection('blogs', blogs, { onlyActive: true });
+  const { items: testimonialItems } = useApiCollection('testimonials', testimonials, { onlyActive: true });
 
   return (
     <>
@@ -114,16 +114,29 @@ export default function Home() {
 
       <section className="section bg-white/[.025] section-3d">
         <div className="container grid gap-6 lg:grid-cols-3">
-          {testimonialItems.slice(0, 3).map((item, i) => (
-            <motion.div key={item.id || item.name || item.title} className="glass rounded-[8px] p-6 glass-3d testimonial-3d premium-glow shimmer-border" initial={{ opacity: 0, y: 50, rotateY: i % 2 ? 10 : -10, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.13, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
-              <div className="text-champagne">{'★'.repeat(item.rating)}</div>
-              <p className="mt-5 text-lg leading-8 text-white/78">"{item.quote || item.review}"</p>
-              <div className="mt-6">
-                <strong>{item.name || item.title}</strong>
-                <span className="block text-sm text-white/48">{item.role || item.profession}</span>
-              </div>
-            </motion.div>
-          ))}
+          {testimonialItems.slice(0, 3).map((item, i) => {
+            const avatar = item.profileImage || item.image;
+            const name = item.clientName || item.name || item.title || 'Client';
+            const role = item.designation || item.role || item.profession || 'Partner';
+            const comment = item.message || item.quote || item.review || 'Exceptional craftsmanship and service.';
+            return (
+              <motion.div key={item.id || name || i} className="glass rounded-[8px] p-6 glass-3d testimonial-3d premium-glow shimmer-border flex flex-col justify-between" initial={{ opacity: 0, y: 50, rotateY: i % 2 ? 10 : -10, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.13, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
+                <div>
+                  <div className="text-champagne">{'★'.repeat(Number(item.rating || 5))}</div>
+                  <p className="mt-5 text-lg leading-8 text-white/78">"{comment}"</p>
+                </div>
+                <div className="mt-6 flex items-center gap-4">
+                  {avatar && (
+                    <img src={avatar} alt={name} className="h-11 w-11 rounded-full object-cover border border-champagne/30" />
+                  )}
+                  <div>
+                    <strong className="block text-white">{name}</strong>
+                    <span className="block text-sm text-white/48">{role}</span>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
@@ -138,14 +151,18 @@ export default function Home() {
           </Reveal>
           <div className="grid gap-5 md:grid-cols-3">
             {blogItems.slice(0, 3).map((post, i) => (
-              <motion.article key={post.id || post.title} className="glass overflow-hidden rounded-[8px] blog-3d glass-3d premium-glow shimmer-border" initial={{ opacity: 0, y: 60, rotateX: -10, scale: 0.94 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.12, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
-                <div className="overflow-hidden">
-                  <img src={post.image} alt={post.title} loading="lazy" className="h-56 w-full object-cover transition duration-700" />
-                </div>
-                <div className="p-5">
-                  <span className="text-xs font-bold uppercase tracking-[.18em] text-champagne">{post.category}</span>
-                  <h3 className="mt-3 font-display text-2xl">{post.title}</h3>
-                </div>
+              <motion.article key={post.id || post.title} className="glass overflow-hidden rounded-[8px] blog-3d glass-3d premium-glow shimmer-border h-full flex flex-col" initial={{ opacity: 0, y: 60, rotateX: -10, scale: 0.94 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.12, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
+                <Link to={`/blog/${post.slug || post.id || post._id}`} className="group block flex-1 flex flex-col">
+                  <div className="overflow-hidden h-56 w-full">
+                    <img src={post.image || post.featuredImage} alt={post.title} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-[.18em] text-champagne">{post.category}</span>
+                      <h3 className="mt-3 font-display text-2xl group-hover:text-champagne transition duration-300">{post.title}</h3>
+                    </div>
+                  </div>
+                </Link>
               </motion.article>
             ))}
           </div>

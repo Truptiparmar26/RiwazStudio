@@ -10,8 +10,8 @@ const router = express.Router();
 
 router.get('/', getServices);
 router.get('/:slug', getServiceBySlug);
-router.post('/', protect, adminOnly, upload.single('bannerImage'), [body('title').isLength({ min: 2, max: 140 }), body('description').isLength({ min: 10 })], validate, createService);
-router.put('/:id', protect, adminOnly, upload.single('bannerImage'), validate, updateService);
+router.post('/', protect, adminOnly, upload.any(), [body('title').optional().isString()], validate, createService);
+router.put('/:id', protect, adminOnly, upload.any(), validate, updateService);
 router.delete('/:id', protect, adminOnly, deleteService);
 
 export default router;

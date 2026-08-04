@@ -4,17 +4,16 @@ import { FiMaximize2, FiSearch, FiX } from 'react-icons/fi';
 import PreloadedImage from '../components/PreloadedImage.jsx';
 import Reveal from '../components/Reveal.jsx';
 import { categories, gallery } from '../data/content.js';
-import { useStoredCollection } from '../utils/siteStore.js';
+import { useApiCollection } from '../utils/siteStore.js';
 
 export default function Gallery() {
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
-  const galleryItems = useStoredCollection('gallery', gallery);
+  const { items: galleryItems, loading, error, refetch } = useApiCollection('gallery', gallery, { onlyActive: true });
   
   const filtered = useMemo(() => {
-    const published = galleryItems.filter((item) => item.status !== 'draft');
-    let items = category === 'All' ? published : published.filter((item) => item.category === category);
+    let items = category === 'All' ? galleryItems : galleryItems.filter((item) => item.category === category);
     if (search.trim()) {
       const query = search.toLowerCase();
       items = items.filter((item) => item.title?.toLowerCase().includes(query) || item.category?.toLowerCase().includes(query));
@@ -97,7 +96,25 @@ export default function Gallery() {
             })}
           </div>
 
+          {loading && galleryItems.length === 0 && (
+            <div className="mt-20 flex flex-col items-center justify-center py-16 text-white/60">
+              <span className="h-10 w-10 animate-spin rounded-full border-2 border-champagne border-t-transparent" />
+              <p className="mt-4 text-sm font-bold uppercase tracking-widest text-champagne">Loading portfolio archive...</p>
+            </div>
+          )}
+
+          {error && galleryItems.length === 0 && (
+            <div className="mt-16 text-center text-white/60 py-20 border border-dashed border-red-500/30 rounded-[16px] bg-red-500/5">
+              <p className="font-display text-2xl text-white/80">Unable to load archive from server.</p>
+              <p className="mt-2 text-sm text-white/50">{error}</p>
+              <button onClick={refetch} className="mt-6 rounded-full bg-champagne px-6 py-2 text-xs font-bold text-black uppercase">
+                Retry Loading
+              </button>
+            </div>
+          )}
+
           {/* Gallery Masonry 3D Grid */}
+          {!loading && (
           <motion.div layout className="mt-12 columns-1 gap-6 sm:columns-2 lg:columns-3">
             <AnimatePresence>
               {filtered.map((item, index) => (
@@ -140,8 +157,9 @@ export default function Gallery() {
               ))}
             </AnimatePresence>
           </motion.div>
+          )}
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && !error && (
             <div className="mt-16 text-center text-white/60 py-20 border border-dashed border-white/15 rounded-[16px]">
               <p className="font-display text-2xl text-white/80">No edits found for "{search || category}"</p>
               <button onClick={() => { setCategory('All'); setSearch(''); }} className="mt-4 rounded-full bg-champagne px-6 py-2 text-xs font-bold text-black uppercase">
@@ -156,14 +174,14 @@ export default function Gallery() {
       <AnimatePresence>
         {selected && (
           <motion.div
-            className="fixed inset-0 z-[110] grid place-items-center bg-black/95 p-4 md:p-10 backdrop-blur-2xl"
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 p-3 sm:p-6 md:p-10 backdrop-blur-2xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelected(null)}
           >
             <motion.div
-              className="relative max-h-[90vh] max-w-5xl overflow-hidden rounded-[16px] border border-champagne/30 bg-ink p-2 shadow-[0_0_80px_rgba(0,0,0,0.9)]"
+              className="relative flex flex-col max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-[16px] border border-champagne/30 bg-ink shadow-[0_0_80px_rgba(0,0,0,0.9)]"
               initial={{ scale: 0.92, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.92, y: 20 }}
@@ -172,29 +190,33 @@ export default function Gallery() {
               <button
                 type="button"
                 aria-label="Close lightbox"
-                className="absolute right-5 top-5 z-20 grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-black/70 text-white transition hover:border-champagne hover:text-champagne hover:scale-110"
+                className="absolute right-4 top-4 z-30 grid h-10 w-10 sm:h-12 sm:w-12 place-items-center rounded-full border border-white/20 bg-black/70 text-white transition hover:border-champagne hover:text-champagne hover:scale-110"
                 onClick={() => setSelected(null)}
               >
-                <FiX className="text-xl" />
+                <FiX className="text-lg sm:text-xl" />
               </button>
 
-              <PreloadedImage
-                src={selected.image || selected.url}
-                alt={selected.title}
-                priority={true}
-                containerClassName="max-h-[78vh] w-auto max-w-full rounded-[12px] shadow-2xl mx-auto min-h-[360px] min-w-[300px] sm:min-w-[460px]"
-                className="max-h-[78vh] w-auto max-w-full rounded-[12px] object-contain shadow-2xl mx-auto"
-                onContextMenu={(event) => event.preventDefault()}
-              />
+              <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center bg-charcoal/50 p-2 sm:p-4">
+                <PreloadedImage
+                  src={selected.image || selected.url}
+                  alt={selected.title}
+                  priority={true}
+                  containerClassName="flex items-center justify-center h-full w-full max-h-[68vh] min-h-[180px]"
+                  className="max-h-full w-auto max-w-full rounded-[10px] object-contain shadow-2xl mx-auto"
+                  onContextMenu={(event) => event.preventDefault()}
+                />
+              </div>
 
-              <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-ink">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-champagne">{selected.category} Suite</span>
-                  <h3 className="font-display text-2xl font-bold text-white mt-0.5">{selected.title}</h3>
+              <div className="shrink-0 p-5 sm:px-8 sm:py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-ink border-t border-white/10">
+                <div className="min-w-0 pr-4">
+                  <span className="inline-block rounded-full border border-champagne/30 bg-champagne/10 px-3 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-champagne mb-1.5 shadow-sm">
+                    {selected.category} Suite
+                  </span>
+                  <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white truncate max-w-xl">{selected.title}</h3>
                 </div>
                 <a
                   href="/contact"
-                  className="w-full sm:w-auto text-center rounded-full bg-champagne px-6 py-2.5 text-xs font-black uppercase text-ink hover:scale-105 transition shadow-[0_0_20px_rgba(244,214,144,0.4)]"
+                  className="shrink-0 w-full sm:w-auto text-center rounded-full bg-champagne px-7 py-3 text-xs font-black uppercase tracking-wider text-ink hover:scale-105 transition shadow-[0_0_25px_rgba(244,214,144,0.35)]"
                 >
                   Inquire Similar Grade
                 </a>
