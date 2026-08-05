@@ -38,9 +38,8 @@ async function seedAdmin() {
     if (admin) {
       admin.email = email;
       admin.role = 'admin';
-      admin.password = encryptedPassword;
       await admin.save();
-      console.log('Admin account credentials & password synchronized in database');
+      console.log('Admin account verified in database (preserving any password resets)');
     } else {
       await Admin.create({
         name: 'Riwaz Admin',

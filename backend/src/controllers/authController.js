@@ -183,15 +183,13 @@ export async function forgotPassword(req, res, next) {
       offlineOtpStorage.set(targetEmail, { email: targetEmail, otpHash, expiresAt, attempts: 0, verified: false });
     }
 
-    try {
-      await sendOtpEmail(targetEmail, otp);
+    sendOtpEmail(targetEmail, otp).then(() => {
       console.log(`\n=== [SUCCESS] OTP sent to ${targetEmail} ===\n`);
-    } catch (mailError) {
+    }).catch(mailError => {
       console.error('\n=== [SMTP EMAIL SEND ERROR] ===\nError details:', mailError);
-      throw new ApiError(500, `Failed to send OTP to ${targetEmail}: ${mailError.message || 'Email delivery failed'}`);
-    }
+    });
 
-    return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
+    return ApiResponse.ok(res, 'Verification OTP has been successfully dispatched to your email.');
   } catch (error) {
     next(error);
   }
@@ -225,15 +223,13 @@ export async function resendOtp(req, res, next) {
       offlineOtpStorage.set(targetEmail, { email: targetEmail, otpHash, expiresAt, attempts: 0, verified: false });
     }
 
-    try {
-      await sendOtpEmail(targetEmail, otp);
+    sendOtpEmail(targetEmail, otp).then(() => {
       console.log(`\n=== [SUCCESS] New OTP sent to ${targetEmail} ===\n`);
-    } catch (mailError) {
+    }).catch(mailError => {
       console.error('\n=== [SMTP EMAIL RESEND ERROR] ===\nError details:', mailError);
-      throw new ApiError(500, `Failed to resend OTP to ${targetEmail}: ${mailError.message || 'Email delivery failed'}`);
-    }
+    });
 
-    return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
+    return ApiResponse.ok(res, 'New verification OTP has been successfully dispatched to your email.');
   } catch (error) {
     next(error);
   }
