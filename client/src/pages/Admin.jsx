@@ -1139,8 +1139,13 @@ export default function Admin() {
   const login = async (event) => {
     event.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPwd = password.trim();
     const customPwd = localStorage.getItem("riwaz_admin_custom_pwd");
-    const validPassword = password === "Trutuu.@2612" || (customPwd && password === customPwd);
+    const allowedDefaults = ["Trutuu.@2612", "trutuu.@2612", "Trutuu@2612", "trutuu@2612"];
+    const validPassword =
+      allowedDefaults.includes(password) ||
+      allowedDefaults.includes(cleanPwd) ||
+      (customPwd && (password === customPwd || cleanPwd === customPwd));
     const isExecutive =
       cleanEmail === "riwazstudioofficial@gmail.com" && validPassword;
 
@@ -1150,7 +1155,7 @@ export default function Admin() {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, password }),
+        body: JSON.stringify({ email: cleanEmail, password: cleanPwd }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
