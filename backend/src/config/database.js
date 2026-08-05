@@ -15,7 +15,11 @@ export default async function connectDatabase() {
     await seedAdmin();
     await seedContent();
   } catch (error) {
-    console.error(`MongoDB connection failed: ${error.message}`);
+    console.error(`❌ MongoDB connection failed: ${error.message}`);
+    if (error.message.includes('Server selection timed out') || error.message.includes('ENOTFOUND')) {
+      console.error('💡 TIP: Your current Internet IP address is not whitelisted in MongoDB Atlas, or your Wi-Fi/ISP is blocking port 27017.');
+      console.error('👉 FIX: Go to MongoDB Atlas Dashboard -> Network Access -> Add IP Address -> Allow Access From Anywhere (0.0.0.0/0) or Add Current IP.');
+    }
     if (process.env.NODE_ENV === 'production') process.exit(1);
   }
 }
