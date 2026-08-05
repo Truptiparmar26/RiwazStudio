@@ -289,6 +289,10 @@ function ForgotPasswordCard({ onNotice }) {
       setError("Please enter a valid executive email address.");
       return;
     }
+    if (cleanEmail !== "riwazstudioofficial@gmail.com") {
+      setError("⛔ Access Denied!!");
+      return;
+    }
     setError("");
     setIsSubmitting(true);
 
@@ -303,12 +307,12 @@ function ForgotPasswordCard({ onNotice }) {
         throw new Error(resData.message || "Unable to send OTP right now.");
       }
       sessionStorage.setItem("reset_email", cleanEmail);
-      onNotice("If the email is registered, a verification code has been sent.");
+      onNotice("Verification OTP has been successfully sent to the official Riwaz mail ID.");
       navigate("/admin/verify-otp");
     } catch (err) {
-      if (!err.message.includes("Too many")) {
+      if (!err.message.includes("Too many") && !err.message.includes("Access Denied") && cleanEmail === "riwazstudioofficial@gmail.com") {
         sessionStorage.setItem("reset_email", cleanEmail);
-        onNotice("If the email is registered, a verification code has been sent.");
+        onNotice("Verification OTP has been successfully sent to the official Riwaz mail ID.");
         navigate("/admin/verify-otp");
       } else {
         setError(err.message);

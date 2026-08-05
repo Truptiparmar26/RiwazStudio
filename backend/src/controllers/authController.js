@@ -161,8 +161,9 @@ export async function forgotPassword(req, res, next) {
     if (!email) throw new ApiError(400, 'Email address is required.');
 
     const defaultAdminEmail = 'riwazstudioofficial@gmail.com';
-    if (email !== defaultAdminEmail) {
-      return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (email !== defaultAdminEmail && email !== envAdminEmail) {
+      throw new ApiError(403, '⛔ Access Denied: Password recovery is restricted strictly to the official Riwaz Studio executive mail ID.');
     }
 
     const otp = crypto.randomInt(100000, 1000000).toString();
@@ -202,8 +203,9 @@ export async function resendOtp(req, res, next) {
     if (!email) throw new ApiError(400, 'Email address is required.');
 
     const defaultAdminEmail = 'riwazstudioofficial@gmail.com';
-    if (email !== defaultAdminEmail) {
-      return ApiResponse.ok(res, 'If the email is registered, a verification code has been sent.');
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (email !== defaultAdminEmail && email !== envAdminEmail) {
+      throw new ApiError(403, '⛔ Access Denied: Password recovery is restricted strictly to the official Riwaz Studio executive mail ID.');
     }
 
     const otp = crypto.randomInt(100000, 1000000).toString();
@@ -243,8 +245,10 @@ export async function verifyOtp(req, res, next) {
     const otp = (req.body.otp || '').trim();
     if (!email || !otp) throw new ApiError(400, 'Email and verification code are required.');
 
-    if (email !== 'riwazstudioofficial@gmail.com') {
-      throw new ApiError(400, 'Incorrect verification code or expired session. Please try again.');
+    const defaultAdminEmail = 'riwazstudioofficial@gmail.com';
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (email !== defaultAdminEmail && email !== envAdminEmail) {
+      throw new ApiError(403, '⛔ Access Denied: Password recovery is restricted strictly to the official Riwaz Studio executive mail ID.');
     }
 
     const submittedHash = crypto.createHash('sha256').update(otp).digest('hex');
@@ -299,7 +303,13 @@ export async function resetPassword(req, res, next) {
   try {
     const newPassword = req.body.newPassword || req.body.password;
     const resetToken = req.body.resetToken || req.headers['x-reset-token'] || req.params.token;
-    const email = (req.body.email || process.env.ADMIN_EMAIL || 'riwazstudioofficial@gmail.com').toLowerCase();
+    const email = (req.body.email || process.env.ADMIN_EMAIL || 'riwazstudioofficial@gmail.com').trim().toLowerCase();
+
+    const defaultAdminEmail = 'riwazstudioofficial@gmail.com';
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    if (req.body.email && email !== defaultAdminEmail && email !== envAdminEmail) {
+      throw new ApiError(403, '⛔ Access Denied: Password recovery is restricted strictly to the official Riwaz Studio executive mail ID.');
+    }
 
     if (!newPassword || newPassword.length < 8) {
       throw new ApiError(400, 'Password must be at least 8 characters long.');
