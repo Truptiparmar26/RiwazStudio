@@ -995,6 +995,7 @@ export default function Admin() {
 
   const [token, setToken] = useState(localStorage.getItem("riwaz_token") || "");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -1261,21 +1262,58 @@ export default function Admin() {
     }
   };
 
+  const markAllMessagesRead = () => {
+    const updated = (records.messages || []).map((item) => ({
+      ...item,
+      status: "read",
+    }));
+    refresh("messages", updated);
+    localStorage.setItem("riwaz_site_messages", JSON.stringify(updated));
+    setNotice("All notifications marked as read and cleared! ✅");
+    if (!token?.startsWith("demo.")) {
+      updated.forEach((item) => {
+        if (item.id) {
+          fetch(`/api/contact/${item.id}/read`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => {});
+        }
+      });
+    }
+  };
+
   const reply = async (item) => {
-    const message = window.prompt(
-      `Reply to ${item.email || item.name}`,
-      `Hello ${item.name || ""},\n\n`,
-    );
-    if (!message) return;
+    const recipient = item.email || "";
+    if (!recipient) {
+      setNotice("No email address provided by this customer.");
+      return;
+    }
+    const inquirySub = item.subject || "Photo Editing & Studio Inquiry";
+    const subject = encodeURIComponent(`Re: ${inquirySub}`);
+    const bodyText = `Hello ${item.name || item.clientName || "Valued Client"},\n\nThank you for contacting Riwaz Studio.\n\nWe appreciate your interest in our photo editing services. We have received your inquiry regarding "${inquirySub}" and will review it carefully.\n\n[Write your personalized reply here.]\n\nIf you have any additional questions or requirements, please feel free to reply to this email. We're happy to assist you.\n\nWarm Regards,\n\nRiwaz Studio\nProfessional Photo Editing Services\nhttps://riwazstudio.vercel.app`;
+    const body = encodeURIComponent(bodyText);
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+    } else {
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipient)}&su=${subject}&body=${body}`;
+      const win = window.open(gmailUrl, "_blank");
+      if (!win || win.closed || typeof win.closed === "undefined") {
+        window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+      }
+    }
+
     refresh(
       "messages",
       upsertRecord(
         "messages",
-        { ...item, status: "replied", reply: message },
+        { ...item, status: "replied", reply: "Replied via email client" },
         fallback.messages,
       ),
     );
-    setNotice("Reply saved and sent to user email.");
+    setNotice(`Opened email compose for ${recipient}! Message marked as Replied. 📧`);
+
     if (!token?.startsWith("demo.") && item.id) {
       try {
         await fetch(`/api/contact/${item.id}/reply`, {
@@ -1284,7 +1322,7 @@ export default function Admin() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify({ message: "Replied via email client" }),
         });
       } catch {
         /* offline fallback */
@@ -1614,10 +1652,162 @@ export default function Admin() {
             >
               <FiRefreshCw className="text-sm" /> Sync Server
             </button>
-            <button className="relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600">
-              <FiBell />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
-            </button>
+            <div className="relative">
+              {(() => {
+                const unreadInquiries = (records.messages || []).filter(
+                  (m) => m.status !== "read" && m.status !== "replied",
+                );
+                return (
+                  <>
+                    <button
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      className={`relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-[8px] border transition-all duration-200 ${
+                        showNotifications ? "border-blue-600 bg-blue-50 text-blue-700 ring-2 ring-blue-500/20" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                      title="View customer contact form notifications"
+                    >
+                      <FiBell />
+                      {unreadInquiries.length > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black text-white shadow-md animate-pulse">
+                          {unreadInquiries.length}
+                        </span>
+                      )}
+                    </button>
+                    <AnimatePresence>
+                      {showNotifications && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40 bg-transparent"
+                            onClick={() => setShowNotifications(false)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-12 z-50 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden text-left"
+                          >
+                            <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-slate-900 via-[#0f172a] to-[#1e293b] px-4 py-3.5 text-white">
+                              <div className="flex items-center gap-2">
+                                <FiMessageSquare className="text-blue-400" />
+                                <span className="text-xs font-black uppercase tracking-wider">
+                                  Customer Inquiries
+                                </span>
+                                {unreadInquiries.length > 0 && (
+                                  <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black text-white">
+                                    {unreadInquiries.length} New
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {unreadInquiries.length > 0 && (
+                                  <button
+                                    onClick={() => markAllMessagesRead()}
+                                    className="rounded bg-white/10 px-2 py-1 text-[10px] font-black text-blue-200 hover:bg-white/20 hover:text-white transition"
+                                    title="Mark all notifications as read"
+                                  >
+                                    Clear All
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setShowNotifications(false)}
+                                  className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
+                                >
+                                  <FiX className="text-base" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                              {!unreadInquiries.length ? (
+                                <div className="p-6 text-center">
+                                  <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+                                    <FiCheckCircle className="text-2xl" />
+                                  </div>
+                                  <p className="text-xs font-extrabold text-slate-800">
+                                    All Caught Up! 🎉
+                                  </p>
+                                  <p className="mt-1 text-[11px] font-semibold text-slate-400">
+                                    You have read all recent customer inquiries from your website!
+                                  </p>
+                                </div>
+                              ) : (
+                                unreadInquiries.slice(0, 6).map((item, i) => {
+                                  const initials = (item.name || item.clientName || "CX")
+                                    .slice(0, 2)
+                                    .toUpperCase();
+                                  return (
+                                    <div
+                                      key={item.id || i}
+                                      onClick={() => {
+                                        markRead(item);
+                                        setShowNotifications(false);
+                                        navigate("/admin/messages");
+                                      }}
+                                      className="flex cursor-pointer gap-3.5 px-4 py-3.5 transition hover:bg-blue-50/60 bg-blue-50/25 group relative"
+                                    >
+                                      <div className="flex-shrink-0 relative">
+                                        <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-xs font-black text-white shadow-sm">
+                                          {initials}
+                                        </div>
+                                        <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rose-500" />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <h5 className="truncate text-xs font-extrabold text-slate-800">
+                                            {item.name || item.clientName || "Website Visitor"}
+                                          </h5>
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="text-[10px] font-bold text-slate-400">
+                                              {item.updatedAt || item.createdAt ? String(item.updatedAt || item.createdAt).split("|")[0].trim() : "New"}
+                                            </span>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                markRead(item);
+                                              }}
+                                              className="ml-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700 hover:bg-emerald-600 hover:text-white shadow-xs transition"
+                                              title="Mark as read without opening"
+                                            >
+                                              ✓ Read
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <p className="mt-0.5 truncate text-[11px] font-bold text-blue-600">
+                                          {item.subject || "Wedding / Photography Inquiry"}
+                                        </p>
+                                        <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-500 leading-relaxed">
+                                          "{item.message || item.quote || item.shortDescription || "Contacted via Riwaz Studio form."}"
+                                        </p>
+                                        {item.phone && (
+                                          <span className="mt-1.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-700">
+                                            📞 {item.phone}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+
+                            <div className="border-t border-slate-100 bg-slate-50 p-2.5">
+                              <Link
+                                to="/admin/messages"
+                                onClick={() => setShowNotifications(false)}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2054f4] py-2.5 text-xs font-black text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700"
+                              >
+                                <span>Open Customer Inbox ({records.messages?.length || 0} Total)</span>
+                              </Link>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </>
+                );
+              })()}
+            </div>
             <Link
               to="/"
               className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-[8px] border border-slate-200 bg-white text-slate-600"
