@@ -279,7 +279,7 @@ export default function PrivacyPolicy() {
               <span>Currently Accepting Global Commissions</span>
             </div>
 
-            <div className="flex items-center justify-center gap-6 mb-8">
+            <div className="flex items-center justify-center gap-6 mb-12 sm:mb-16">
               <SocialLink href="https://www.instagram.com/riwazstudio_?igsh=bWRzdzFmZG1hczFy" icon={<FiInstagram />} label="Instagram" colorClass="text-pink-400 border-pink-500/30 bg-pink-500/10 hover:border-transparent hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 hover:text-white hover:shadow-[0_0_30px_rgba(236,72,153,0.6)]" />
               <SocialLink href="mailto:riwazstudioofficial@gmail.com" icon={<FiMail />} label="Email" colorClass="text-blue-400 border-blue-500/30 bg-blue-500/10 hover:border-blue-500 hover:bg-blue-500 hover:text-white hover:shadow-[0_0_30px_rgba(59,130,246,0.6)]" />
               <SocialLink href="https://wa.me/918780464627" icon={<FaWhatsapp />} label="WhatsApp" colorClass="text-green-400 border-green-500/30 bg-green-500/10 hover:border-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_30px_rgba(34,197,94,0.6)]" />
