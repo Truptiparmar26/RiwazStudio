@@ -107,7 +107,7 @@ export default function Footer() {
           </form>
 
           {/* Social Icons */}
-          <div className="mt-8 flex items-center gap-3.5">
+          <div className="mt-8 pb-10 md:pb-0 flex items-center gap-3.5">
             <a
               href="https://www.instagram.com/riwazstudio_?igsh=bWRzdzFmZG1hczFy"
               target="_blank"
@@ -148,7 +148,7 @@ export default function Footer() {
       </div>
 
       {/* Copyright Bar */}
-      <div className="container relative mt-12 sm:mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-white/50">
+      <div className="container relative mt-8 md:mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-white/50">
         <p>© 2026 Riwaz Studio. Crafted with precision for high-end luxury storytelling.</p>
         <div className="flex gap-6 z-10 relative">
           <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-champagne transition cursor-pointer">Privacy Policy</Link>
