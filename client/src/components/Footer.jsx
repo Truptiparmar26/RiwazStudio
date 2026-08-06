@@ -113,7 +113,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition-all duration-300 hover:-translate-y-1 hover:border-pink-500 hover:bg-pink-500/20 hover:text-pink-400 hover:shadow-[0_0_25px_rgba(236,72,153,0.5)]"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-pink-500/30 bg-pink-500/10 text-xl text-pink-400 transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600 hover:text-white hover:shadow-[0_0_25px_rgba(236,72,153,0.6)]"
             >
               <FiInstagram />
             </a>
@@ -123,7 +123,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="WhatsApp"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition-all duration-300 hover:-translate-y-1 hover:border-green-500 hover:bg-green-500/20 hover:text-green-400 hover:shadow-[0_0_25px_rgba(34,197,94,0.5)]"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-green-500/30 bg-green-500/10 text-xl text-green-400 transition-all duration-300 hover:-translate-y-1 hover:border-green-500 hover:bg-green-500 hover:text-white hover:shadow-[0_0_25px_rgba(34,197,94,0.6)]"
             >
               <FaWhatsapp />
             </a>
@@ -131,7 +131,7 @@ export default function Footer() {
             <a
               href="mailto:riwazstudioofficial@gmail.com"
               aria-label="Email Us"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-blue-500/30 bg-blue-500/10 text-xl text-blue-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:bg-blue-500 hover:text-white hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]"
             >
               <FiMail />
             </a>
@@ -139,7 +139,7 @@ export default function Footer() {
             <a
               href="sms:+918780464627"
               aria-label="SMS Us"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition-all duration-300 hover:-translate-y-1 hover:border-champagne hover:bg-champagne/20 hover:text-champagne hover:shadow-[0_0_25px_rgba(244,214,144,0.5)]"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-champagne/30 bg-champagne/10 text-xl text-champagne transition-all duration-300 hover:-translate-y-1 hover:border-champagne hover:bg-champagne hover:text-black hover:shadow-[0_0_25px_rgba(244,214,144,0.6)]"
             >
               <FiMessageSquare />
             </a>
@@ -148,11 +148,11 @@ export default function Footer() {
       </div>
 
       {/* Copyright Bar */}
-      <div className="container relative mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-white/50">
+      <div className="container relative mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-white/50">
         <p>© 2026 Riwaz Studio. Crafted with precision for high-end luxury storytelling.</p>
-        <div className="flex gap-6">
-          <span className="hover:text-champagne transition cursor-pointer">Privacy Policy</span>
-          <span className="hover:text-champagne transition cursor-pointer">Terms of Service</span>
+        <div className="flex gap-6 z-10 relative">
+          <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-champagne transition cursor-pointer">Privacy Policy</Link>
+          <Link to="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="hover:text-champagne transition cursor-pointer">Terms & Conditions</Link>
         </div>
       </div>
     </footer>

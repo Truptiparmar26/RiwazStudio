@@ -16,7 +16,9 @@ import Contact from './pages/Contact.jsx';
 import Gallery from './pages/Gallery.jsx';
 import Home from './pages/Home.jsx';
 import NotFound from './pages/NotFound.jsx';
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
 import Services from './pages/Services.jsx';
+import TermsAndConditions from './pages/TermsAndConditions.jsx';
 import Testimonials from './pages/Testimonials.jsx';
 
 function ScrollProgress() {
@@ -28,10 +30,16 @@ function ScrollProgress() {
 export default function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isStandaloneRoute = location.pathname === '/terms-and-conditions' || location.pathname === '/privacy-policy';
+  const showLayout = !isAdminRoute && !isStandaloneRoute;
 
   useEffect(() => {
     document.body.classList.remove('light');
   }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   useEffect(() => {
     const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
@@ -49,10 +57,10 @@ export default function App() {
 
   return (
     <>
-      {!isAdminRoute && <Preloader />}
-      {!isAdminRoute && <ScrollProgress />}
-      {!isAdminRoute && <CursorGlow />}
-      {!isAdminRoute && <Navbar />}
+      {showLayout && <Preloader />}
+      {showLayout && <ScrollProgress />}
+      {showLayout && <CursorGlow />}
+      {showLayout && <Navbar />}
       {isAdminRoute ? (
         <Routes location={location}>
           <Route path="/admin/*" element={<Admin />} />
@@ -76,13 +84,15 @@ export default function App() {
               <Route path="/blog/:slug" element={<BlogDetail />} />
               <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </motion.main>
         </AnimatePresence>
       )}
-      {!isAdminRoute && <Footer />}
-      {!isAdminRoute && <WhatsAppButton />}
+      {showLayout && <Footer />}
+      {showLayout && <WhatsAppButton />}
     </>
   );
 }
