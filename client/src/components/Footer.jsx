@@ -109,7 +109,7 @@ export default function Footer() {
           {/* Social Icons */}
           <div className="mt-8 pb-10 md:pb-0 flex items-center gap-3.5">
             <a
-              href="https://www.instagram.com/riwazstudio_?igsh=bWRzdzFmZG1hczFy"
+              href="https://www.instagram.com/riwazstudioofficial?stkn=bWRzdzFmZG1hczFy"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"

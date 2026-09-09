@@ -183,7 +183,7 @@ export default function Contact() {
               <h2 className="font-display text-4xl font-bold tracking-tight text-white">Studio details</h2>
               <div className="mt-10 flex flex-col gap-6 text-white/80 text-sm sm:text-base">
                 <a href="mailto:riwazstudioofficial@gmail.com" className="flex items-center gap-3.5 hover:text-champagne transition duration-300"><FiMail className="text-champagne text-xl shrink-0" /> <span>riwazstudioofficial@gmail.com</span></a>
-                <a href="https://www.instagram.com/riwazstudio_?igsh=bWRzdzFmZG1hczFy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3.5 hover:text-champagne transition duration-300"><FiInstagram className="text-champagne text-xl shrink-0" /> <span>@riwazstudio_</span></a>
+                <a href="https://www.instagram.com/riwazstudioofficial?stkn=bWRzdzFmZG1hczFy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3.5 hover:text-champagne transition duration-300"><FiInstagram className="text-champagne text-xl shrink-0" /> <span>@riwazstudioofficial</span></a>
                 <a href="tel:+918780464627" className="flex items-center gap-3.5 hover:text-champagne transition duration-300"><FiPhone className="text-champagne text-xl shrink-0" /> <span>+91 8780464627</span></a>
                 <p className="flex items-center gap-3.5 text-white/70"><FiMapPin className="text-champagne text-xl shrink-0" /> <span>Ahmedabad, India</span></p>
                 <p className="flex items-center gap-3.5 text-white/70"><FiClock className="text-champagne text-xl shrink-0" /> <span>Mon-Sat, 10 AM - 7 PM</span></p>
