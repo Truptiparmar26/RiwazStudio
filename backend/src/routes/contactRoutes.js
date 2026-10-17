@@ -4,10 +4,11 @@ import { createContact, deleteContact, getContacts, markContactRead, replyContac
 import { adminOnly } from '../middlewares/adminMiddleware.js';
 import { protect } from '../middlewares/authMiddleware.js';
 import { validate } from '../middlewares/validationMiddleware.js';
+import { uploadAny } from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', [body('name').notEmpty().withMessage('Name required'), body('email').isEmail().withMessage('Valid email required'), body('message').notEmpty().withMessage('Message required')], validate, createContact);
+router.post('/', uploadAny.single('referenceFile'), [body('name').notEmpty().withMessage('Name required'), body('email').isEmail().withMessage('Valid email required'), body('message').notEmpty().withMessage('Message required')], validate, createContact);
 router.get('/', protect, adminOnly, getContacts);
 router.put('/:id/read', protect, adminOnly, markContactRead);
 router.put('/:id/reply', protect, adminOnly, [body('message').isLength({ min: 2 })], validate, replyContact);

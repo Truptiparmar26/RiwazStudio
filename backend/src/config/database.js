@@ -7,8 +7,8 @@ import Blog from '../models/Blog.js';
 import Testimonial from '../models/Testimonial.js';
 
 export default async function connectDatabase() {
+  if (mongoose.connection.readyState === 1) return;
   try {
-    mongoose.set('bufferCommands', false);
     const connectionUri = process.env.MONGO_URI || process.env.MONGODB_URI;
     await mongoose.connect(connectionUri, { serverSelectionTimeoutMS: 10000 });
     console.log('MongoDB connected successfully to cloud cluster');
@@ -20,7 +20,6 @@ export default async function connectDatabase() {
       console.error('💡 TIP: Your current Internet IP address is not whitelisted in MongoDB Atlas, or your Wi-Fi/ISP is blocking port 27017.');
       console.error('👉 FIX: Go to MongoDB Atlas Dashboard -> Network Access -> Add IP Address -> Allow Access From Anywhere (0.0.0.0/0) or Add Current IP.');
     }
-    if (process.env.NODE_ENV === 'production') process.exit(1);
   }
 }
 
@@ -59,21 +58,23 @@ async function seedContent() {
     const galleryCount = await Gallery.countDocuments();
     if (galleryCount === 0) {
       const defaultGallery = [
-        ['Wedding', 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Fashion', 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Portrait', 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Product', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Nature', 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Baby', 'https://images.unsplash.com/photo-1522771930-78848d9293e8?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Travel', 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Commercial', 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Events', 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Fashion', 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Wedding', 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=750&q=76&fm=webp'],
-        ['Product', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=750&q=76&fm=webp']
-      ].map(([category, image], index) => ({
-        title: `${category} Edit ${index + 1}`,
-        slug: `${category.toLowerCase()}-edit-${index + 1}-${Date.now()}-${index}`,
+        ['Wedding', 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=750&q=76&fm=webp', 'Royal Heritage Wedding Edit'],
+        ['Pre-Wedding', 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=750&q=76&fm=webp', 'Golden Hour Pre-Wedding Story'],
+        ['Portrait', 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=750&q=76&fm=webp', 'Natural Light Editorial Portrait'],
+        ['Retouching', 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=750&q=76&fm=webp', 'High-Fashion Beauty Retouching'],
+        ['Color Grading', 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&w=750&q=76&fm=webp', 'Cinematic Teal & Amber Grading'],
+        ['Creative Edits', 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=750&q=76&fm=webp', 'Vogue Editorial Creative Composite'],
+        ['Instagram Posts', 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=750&q=76&fm=webp', 'Luxury Brand Social Media Grid'],
+        ['Wedding', 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=750&q=76&fm=webp', 'Cinematic Bridal Ceremony Story'],
+        ['Pre-Wedding', 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=750&q=76&fm=webp', 'Romantic Dunes Pre-Wedding Edit'],
+        ['Portrait', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=750&q=76&fm=webp', 'Studio High-Key Fine Art Portrait'],
+        ['Retouching', 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=750&q=76&fm=webp', 'Pore-Preserving Luxury Skin Finish'],
+        ['Color Grading', 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=750&q=76&fm=webp', 'Mood & Nostalgia Film Look'],
+        ['Creative Edits', 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=750&q=76&fm=webp', 'Seamless Landscape Clean Composite'],
+        ['Instagram Posts', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=750&q=76&fm=webp', 'E-Commerce Hero Campaign Layout']
+      ].map(([category, image, title], index) => ({
+        title: title || `${category} Edit ${index + 1}`,
+        slug: `${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index + 1}-${Date.now()}-${index}`,
         category,
         image: { url: image },
         status: 'published'
@@ -85,24 +86,142 @@ async function seedContent() {
     const serviceCount = await Service.countDocuments();
     if (serviceCount === 0) {
       const defaultServices = [
-        'Wedding Editing', 'Pre Wedding Editing', 'Fashion Retouching', 'Product Editing',
-        'Baby Shoot Editing', 'Portrait Retouching', 'Skin Retouch', 'Color Correction'
-      ].map((title, index) => ({
-        title,
-        slug: `${title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${index}`,
-        price: index % 3 === 0 ? 'From $49' : index % 3 === 1 ? 'From $89' : 'Custom',
-        bannerImage: { url: [
-          'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=750&q=76&fm=webp',
-          'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=750&q=76&fm=webp',
-          'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=750&q=76&fm=webp',
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=750&q=76&fm=webp'
-        ][index % 4] },
-        description: 'High-end editing with precise detail recovery, cinematic color language, natural texture, and delivery-ready exports.',
-        features: ['Color craft', 'Texture control', 'Client-ready exports'],
+        {
+          title: 'Wedding Editing',
+          category: 'Weddings & Couples',
+          price: 'Custom',
+          image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+          description: 'Premium wedding photo editing with elegant skin tones, cinematic colors, natural retouching, and a polished final look.',
+          features: ['Cinematic Color', 'Skin Retouch', 'Natural Finish']
+        },
+        {
+          title: 'Pre Wedding Editing',
+          category: 'Weddings & Couples',
+          price: 'From $89',
+          image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
+          description: 'Creative pre-wedding edits with beautiful color grading, clean skin tones, and a romantic cinematic finish.',
+          features: ['Color Grading', 'Skin Retouch', 'Cinematic Look']
+        },
+        {
+          title: 'Fashion Retouching',
+          category: 'Portraits & Retouch',
+          price: 'From $49',
+          image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
+          description: 'High-end fashion retouching with refined skin, detailed textures, clean tones, and a professional editorial finish.',
+          features: ['Beauty Retouch', 'Detail Control', 'Editorial Finish']
+        },
+        {
+          title: 'Product Editing',
+          category: 'Commercial & Real Estate',
+          price: 'From $39',
+          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+          description: 'Clean and professional product editing with accurate colors, refined details, background cleanup, and e-commerce ready results.',
+          features: ['Product Cleanup', 'Color Accuracy', 'Web Ready']
+        },
+        {
+          title: 'Kids Photo Editing',
+          category: 'Portraits & Retouch',
+          price: 'From $49',
+          image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=800&q=80',
+          description: 'Bright and natural kids photo editing with gentle skin retouching, vibrant colors, clean backgrounds, and a playful polished finish.',
+          features: ['Natural Retouch', 'Soft Colors', 'Clean Finish']
+        },
+        {
+          title: 'Portrait Retouching',
+          category: 'Portraits & Retouch',
+          price: 'From $49',
+          image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+          description: 'Professional portrait retouching that enhances skin, lighting, colors, and details while keeping the person natural and authentic.',
+          features: ['Skin Retouch', 'Color Balance', 'Natural Look']
+        },
+        {
+          title: 'Skin Retouch',
+          category: 'Portraits & Retouch',
+          price: 'From $39',
+          image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+          description: 'Natural skin retouching that removes distractions while preserving real texture, facial details, and a clean premium appearance.',
+          features: ['Natural Skin', 'Texture Control', 'Clean Finish']
+        },
+        {
+          title: 'Color Correction',
+          category: 'Color & Drone',
+          price: 'From $29',
+          image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80',
+          description: 'Precise color correction to balance exposure, white balance, skin tones, and overall image consistency.',
+          features: ['Color Balance', 'Skin Tone', 'Exposure Fix']
+        },
+        {
+          title: 'Color Grading',
+          category: 'Color & Drone',
+          price: 'From $59',
+          image: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&w=800&q=80',
+          description: 'Cinematic color grading designed to create mood, depth, consistency, and a distinctive visual style for your images.',
+          features: ['Cinematic Tone', 'Mood & Depth', 'Signature Look']
+        },
+        {
+          title: 'Background Removal',
+          category: 'Restoration & Cutout',
+          price: 'From $19',
+          image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80',
+          description: 'Precise background removal with clean edges and professional masking for portraits, products, and creative compositions.',
+          features: ['Clean Cutout', 'Precise Masking', 'High Quality']
+        },
+        {
+          title: 'Object Removal',
+          category: 'Restoration & Cutout',
+          price: 'From $29',
+          image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+          description: 'Seamless removal of unwanted people, objects, wires, and distractions while maintaining a natural-looking background.',
+          features: ['Clean Removal', 'Seamless Edit', 'Natural Finish']
+        },
+        {
+          title: 'Photo Restoration',
+          category: 'Restoration & Cutout',
+          price: 'From $69',
+          image: 'https://images.unsplash.com/photo-1516541196182-6bdb0516ed27?auto=format&fit=crop&w=800&q=80',
+          description: 'Restore old and damaged photographs with careful repair, detail enhancement, color correction, and a natural finished look.',
+          features: ['Old Photo Repair', 'Detail Recovery', 'Color Restore']
+        },
+        {
+          title: 'Instagram Post Design',
+          category: 'Commercial & Real Estate',
+          price: 'From $39',
+          image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=800&q=80',
+          description: 'Creative and premium Instagram post designs crafted with clean layouts, elegant typography, and a strong visual identity that makes every post stand out.',
+          features: ['Creative Layouts', 'Premium Design', 'Social Ready']
+        },
+        {
+          title: 'Real Estate Editing',
+          category: 'Commercial & Real Estate',
+          price: 'From $49',
+          image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+          description: 'Professional real estate photo editing with balanced exposure, accurate colors, clean interiors, and bright natural-looking results.',
+          features: ['HDR Balance', 'Color Correction', 'Clean Interiors']
+        },
+        {
+          title: 'Drone Editing',
+          category: 'Color & Drone',
+          price: 'From $59',
+          image: 'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80',
+          description: 'Professional drone photo enhancement with improved colors, contrast, details, and cinematic aerial presentation.',
+          features: ['Aerial Enhancement', 'Color Grading', 'Detail Boost']
+        },
+        {
+          title: 'AI Photo Enhancement',
+          category: 'Restoration & AI',
+          price: 'From $39',
+          image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80',
+          description: 'Smart photo enhancement for improving resolution, clarity, details, and overall image quality while keeping the result natural.',
+          features: ['Detail Enhancement', 'Resolution Boost', 'Natural Finish']
+        }
+      ].map((item, index) => ({
+        ...item,
+        slug: `${item.title.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${index}`,
+        bannerImage: { url: item.image },
         status: 'published'
       }));
       await Service.insertMany(defaultServices);
-      console.log('✅ Default Services seeded into MongoDB');
+      console.log('✅ Default 16 Services seeded into MongoDB');
     }
 
     const blogCount = await Blog.countDocuments();

@@ -21,8 +21,8 @@ export default function Home() {
         <div className="container relative z-10 grid items-end gap-10 lg:grid-cols-[1.05fr_.95fr] depth-layer">
           <div>
             <motion.p className="eyebrow" initial={{ opacity: 0, y: 12, filter: 'blur(10px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>Riwaz Studio</motion.p>
-            <motion.h1 className="headline mt-5 max-w-5xl headline-3d-glow" initial={{ opacity: 0, y: 30, rotateX: 15, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }} transition={{ delay: 0.12, duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
-              Transforming Every Photo Into Art.
+            <motion.h1 className="headline mt-5 max-w-5xl headline-3d-glow leading-[1.08] !text-[clamp(2.2rem,5.2vw,4.6rem)]" initial={{ opacity: 0, y: 30, rotateX: 15, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }} transition={{ delay: 0.12, duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
+              Premium Wedding Photo Editing Turning Raw Moments Into Timeless Memories.
             </motion.h1>
             <motion.div className="mt-7 flex flex-wrap gap-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.8 }}>
               {heroTags.map((tag, i) => (
@@ -33,8 +33,8 @@ export default function Home() {
               <Link to="/gallery" className="inline-flex items-center gap-2 rounded-full bg-champagne px-6 py-4 font-extrabold text-black transition btn-3d">
                 Explore Portfolio <FiArrowRight />
               </Link>
-              <Link to="/contact" className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/7 px-6 py-4 font-extrabold text-white backdrop-blur transition btn-outline-3d">
-                Contact Us <FiPlay />
+              <Link to="/before-after" className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/7 px-6 py-4 font-extrabold text-white backdrop-blur transition btn-outline-3d">
+                View My Work <FiPlay />
               </Link>
             </motion.div>
           </div>
@@ -51,10 +51,10 @@ export default function Home() {
         <div className="container grid gap-10 lg:grid-cols-[.9fr_1.1fr]">
           <Reveal>
             <p className="eyebrow">Studio Story</p>
-            <h2 className="mt-4 font-display text-5xl leading-tight md:text-6xl">A retouching atelier built for detail, emotion, and polish.</h2>
+            <h2 className="mt-4 font-display text-5xl leading-tight md:text-6xl">Where every image becomes a timeless visual story.</h2>
           </Reveal>
           <Reveal delay={0.08}>
-            <p className="subhead">Riwaz Studio partners with photographers, studios, creators, and brands to turn raw captures into finished visual stories. Every image is handled with layered color, natural retouching, restoration discipline, and export precision.</p>
+            <p className="subhead">Riwaz Studio partners with photographers, studios, creators, and brands to transform raw captures into polished visual stories. Every image is carefully crafted with professional color grading, natural retouching, detailed corrections, and precise finishing — delivering visuals that are clean, consistent, and ready to impress.</p>
             <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
               {stats.map((stat, i) => (
                 <motion.div key={stat.label} className="glass rounded-[8px] p-5 glass-3d stat-3d premium-glow shimmer-border" initial={{ opacity: 0, y: 35, rotateX: -12, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-60px' }} transition={{ delay: i * 0.1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
@@ -90,7 +90,13 @@ export default function Home() {
         <div className="container">
           <Reveal>
             <p className="eyebrow">3D Gallery</p>
-            <h2 className="mt-4 font-display text-5xl">Selected transformations</h2>
+            <h2 className="mt-4 font-display text-4xl sm:text-5xl font-extrabold tracking-tight text-white headline-3d-glow max-w-4xl leading-[1.14]">
+              Where Every Image <br className="hidden sm:inline" />
+              Becomes a Timeless Story.
+            </h2>
+            <p className="subhead mt-3.5 max-w-2xl text-base sm:text-lg leading-relaxed text-white/75">
+              A curated collection of photo edits, retouching, color grading, and creative visual work by Riwaz Studio.
+            </p>
           </Reveal>
           <div className="mt-10 grid auto-rows-[220px] gap-4 md:grid-cols-4">
             {galleryItems.slice(0, 8).map((item, index) => (

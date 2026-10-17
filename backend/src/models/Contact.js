@@ -6,6 +6,7 @@ const contactSchema = new mongoose.Schema({
   email: { type: String, required: true, lowercase: true, trim: true },
   subject: { type: String, required: true, trim: true, maxlength: 180 },
   message: { type: String, required: true, maxlength: 4000 },
+  referenceUrl: { type: String },
   status: { type: String, enum: ['unread', 'read', 'replied', 'archived'], default: 'unread', index: true },
   reply: { message: String, sentAt: Date }
 }, { timestamps: true });

@@ -13,7 +13,9 @@ export default function Gallery() {
   const { items: galleryItems, loading, error, refetch } = useApiCollection('gallery', gallery, { onlyActive: true });
   
   const filtered = useMemo(() => {
-    let items = category === 'All' ? galleryItems : galleryItems.filter((item) => item.category === category);
+    let items = category.toLowerCase() === 'all'
+      ? galleryItems
+      : galleryItems.filter((item) => (item.category || '').toLowerCase() === category.toLowerCase());
     if (search.trim()) {
       const query = search.toLowerCase();
       items = items.filter((item) => item.title?.toLowerCase().includes(query) || item.category?.toLowerCase().includes(query));
@@ -33,15 +35,15 @@ export default function Gallery() {
   }, [filtered]);
 
   return (
-    <div className="min-h-screen pb-32 pt-36 overflow-hidden">
+    <>
       {/* Ambient background glows */}
       <div className="pointer-events-none fixed top-1/4 left-10 h-96 w-96 rounded-full bg-champagne/10 blur-[130px] z-[-1]" />
       <div className="pointer-events-none fixed bottom-1/4 right-10 h-96 w-96 rounded-full bg-violetGlow/10 blur-[130px] z-[-1]" />
 
-      <section className="section pt-0">
-        <div className="container">
+      <section className="section pt-36 section-3d">
+        <div className="container depth-layer">
           <Reveal className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            <div>
+            <div className="max-w-3xl">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-champagne animate-pulse" />
@@ -52,10 +54,16 @@ export default function Gallery() {
                   HD Preloading Active
                 </span>
               </div>
-              <h1 className="headline mt-4 headline-3d-glow">Luxury edit archive.</h1>
+              <h1 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white headline-3d-glow leading-[1.12]">
+                Where Every Image <br className="hidden sm:inline" />
+                Becomes a Timeless Story.
+              </h1>
+              <p className="subhead mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-white/75">
+                A curated collection of photo edits, retouching, color grading, and creative visual work by Riwaz Studio.
+              </p>
             </div>
             
-            <div className="glass flex max-w-md w-full items-center gap-3 rounded-full px-5 py-3.5 border border-white/15 transition-all duration-300 focus-within:border-champagne focus-within:shadow-[0_0_25px_rgba(244,214,144,0.25)]">
+            <div className="glass flex max-w-md w-full items-center gap-3 rounded-full px-5 py-3.5 border border-white/15 transition-all duration-300 focus-within:border-champagne focus-within:shadow-[0_0_25px_rgba(244,214,144,0.25)] shrink-0 self-start lg:self-end">
               <FiSearch className="text-champagne text-lg shrink-0" />
               <input
                 placeholder="Search portfolio by style or mood..."
@@ -72,25 +80,27 @@ export default function Gallery() {
           </Reveal>
 
           {/* Interactive Category Pills with Framer Motion layout animation */}
-          <div className="no-scrollbar mt-10 flex gap-2.5 overflow-x-auto pb-4">
+          <div className="mt-10 flex flex-wrap items-center gap-2.5 sm:gap-3.5">
             {categories.map((item) => {
-              const isActive = category === item;
+              const isActive = category.toLowerCase() === item.toLowerCase();
               return (
                 <button
                   key={item}
                   onClick={() => setCategory(item)}
-                  className={`relative shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 ${
-                    isActive ? 'text-ink scale-105 shadow-[0_0_20px_rgba(244,214,144,0.5)]' : 'border border-white/12 bg-white/5 text-white/70 hover:text-white hover:border-champagne/35'
+                  className={`group relative shrink-0 rounded-full px-5 py-2.5 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 border ${
+                    isActive
+                      ? 'border-champagne text-ink scale-[1.03] shadow-[0_0_24px_rgba(244,214,144,0.5)]'
+                      : 'border-champagne/60 bg-black/40 text-white hover:border-champagne hover:text-champagne hover:bg-champagne/10 shadow-sm'
                   }`}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="gallery-category-pill"
                       className="absolute inset-0 z-[-1] rounded-full bg-champagne"
-                      transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
                     />
                   )}
-                  {item}
+                  <span className="relative z-10">{item}</span>
                 </button>
               );
             })}
@@ -225,7 +235,7 @@ export default function Gallery() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
 

@@ -3,11 +3,21 @@ import { sendEmail } from '../config/nodemailer.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { getPagination, getPagingData } from '../utils/pagination.js';
+import { uploadToCloudinary } from '../middlewares/uploadMiddleware.js';
 
 export async function createContact(req, res, next) {
   try {
+    let referenceUrl = null;
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file, 'riwaz-contacts');
+      if (uploadResult) referenceUrl = uploadResult.url;
+    }
+
+    const contactData = { ...req.body };
+    if (referenceUrl) contactData.referenceUrl = referenceUrl;
+
     // 1. Save contact submission to MongoDB (ensuring it shows in Admin Panel)
-    const contact = await Contact.create(req.body);
+    const contact = await Contact.create(contactData);
 
     // 2. Prepare email notification details
     const targetEmail = 'riwazstudioofficial@gmail.com';
@@ -24,77 +34,110 @@ export async function createContact(req, res, next) {
       hour12: true
     });
 
+    const fileButtonHtml = contact.referenceUrl 
+      ? `
+        <div style="margin-top: 25px; text-align: center;">
+          <a href="${contact.referenceUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #F4D690 0%, #D4AF37 100%); color: #000000; text-decoration: none; font-weight: 800; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; border-radius: 8px; box-shadow: 0 10px 25px rgba(244,214,144,0.3);">
+            📎 View Reference File
+          </a>
+        </div>
+      ` : '';
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>New Contact Form Submission - Riwaz Studio</title>
+        <title>New Client Inquiry - Riwaz Studio</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #0B0F19; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased;">
-        <div style="max-width: 620px; margin: 30px auto; background: #0F172A; color: #F8FAFC; border-radius: 12px; overflow: hidden; border: 1px solid #1E293B; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-          
-          <!-- Header with Riwaz Studio Branding -->
-          <div style="background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%); padding: 35px 30px; text-align: center; border-bottom: 3px solid #F59E0B;">
-            <h1 style="color: #F59E0B; margin: 0; font-size: 28px; letter-spacing: 3px; font-weight: 800; text-transform: uppercase;">RIWAZ STUDIO</h1>
-            <p style="color: #E2E8F0; font-size: 14px; margin: 10px 0 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">New Contact Form Submission</p>
-          </div>
-          
-          <!-- Body Content -->
-          <div style="padding: 35px 30px;">
-            <p style="color: #E2E8F0; font-size: 16px; line-height: 1.6; margin-top: 0; margin-bottom: 25px;">
-              Hello Admin,<br/><br/>
-              A user has just submitted a new contact inquiry through the Riwaz Studio official website. Below are the complete submission details:
-            </p>
-            
-            <!-- Details Card -->
-            <div style="background: #1E293B; border-radius: 10px; padding: 25px; margin: 25px 0; border-left: 4px solid #F59E0B;">
-              
-              <div style="margin-bottom: 16px;">
-                <span style="color: #94A3B8; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block;">User Name</span>
-                <span style="font-size: 17px; color: #FFFFFF; font-weight: 700; margin-top: 3px; display: block;">${contact.name || 'N/A'}</span>
-              </div>
+      <body style="margin: 0; padding: 0; background-color: #080A10; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #080A10; padding: 40px 15px;">
+          <tr>
+            <td align="center">
+              <table width="100%" max-width="650" border="0" cellspacing="0" cellpadding="0" style="max-width: 650px; background: #0E121C; border-radius: 16px; overflow: hidden; border: 1px solid #232A3B; box-shadow: 0 30px 60px rgba(0,0,0,0.8);">
+                
+                <!-- Premium Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #111522 0%, #1A2235 100%); padding: 45px 30px; text-align: center; border-bottom: 2px solid #F4D690;">
+                    <div style="width: 50px; height: 50px; margin: 0 auto 15px; border-radius: 50%; background: #F4D690; display: flex; align-items: center; justify-content: center;">
+                      <span style="color: #000; font-size: 24px; font-weight: bold; line-height: 50px;">R</span>
+                    </div>
+                    <h1 style="color: #F4D690; margin: 0; font-size: 26px; letter-spacing: 4px; font-weight: 900; text-transform: uppercase;">RIWAZ STUDIO</h1>
+                    <p style="color: #8A9BB3; font-size: 13px; margin: 12px 0 0; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Premium Client Inquiry</p>
+                  </td>
+                </tr>
+                
+                <!-- Body Content -->
+                <tr>
+                  <td style="padding: 40px 35px;">
+                    <p style="color: #E2E8F0; font-size: 16px; line-height: 1.6; margin-top: 0; margin-bottom: 30px;">
+                      Hello Admin,<br/><br/>
+                      A new high-priority client inquiry has just been captured. Please find the verified submission details below:
+                    </p>
+                    
+                    <!-- Details Card -->
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background: #141A28; border-radius: 12px; border: 1px solid #232A3B;">
+                      <tr>
+                        <td style="padding: 30px;">
+                          
+                          <!-- Name -->
+                          <div style="margin-bottom: 20px;">
+                            <span style="color: #718096; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block;">Client Name</span>
+                            <span style="font-size: 18px; color: #FFFFFF; font-weight: 700; margin-top: 4px; display: block;">${contact.name || 'N/A'}</span>
+                          </div>
 
-              <div style="margin-bottom: 16px;">
-                <span style="color: #94A3B8; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block;">User Email</span>
-                <a href="mailto:${contact.email || ''}" style="font-size: 16px; color: #60A5FA; text-decoration: none; font-weight: 600; margin-top: 3px; display: block;">${contact.email || 'N/A'}</a>
-              </div>
+                          <!-- Contact Grid -->
+                          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
+                            <tr>
+                              <td width="50%" valign="top">
+                                <span style="color: #718096; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block;">Email Address</span>
+                                <a href="mailto:${contact.email || ''}" style="font-size: 15px; color: #60A5FA; text-decoration: none; font-weight: 600; margin-top: 4px; display: inline-block;">${contact.email || 'N/A'}</a>
+                              </td>
+                              <td width="50%" valign="top">
+                                <span style="color: #718096; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block;">Phone / WhatsApp</span>
+                                <a href="tel:${contact.phone || ''}" style="font-size: 15px; color: #F4D690; text-decoration: none; font-weight: 700; margin-top: 4px; display: inline-block;">${contact.phone || 'N/A'}</a>
+                              </td>
+                            </tr>
+                          </table>
 
-              <div style="margin-bottom: 16px;">
-                <span style="color: #94A3B8; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block;">Phone Number</span>
-                <a href="tel:${contact.phone || ''}" style="font-size: 16px; color: #F59E0B; text-decoration: none; font-weight: 700; margin-top: 3px; display: block;">${contact.phone || 'N/A'}</a>
-              </div>
+                          <!-- Service -->
+                          <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #232A3B;">
+                            <span style="color: #718096; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block;">Service Requested</span>
+                            <span style="font-size: 16px; color: #FFFFFF; font-weight: 600; margin-top: 4px; display: block;">${contact.subject || 'General Inquiry'}</span>
+                          </div>
+                          
+                          <!-- Message -->
+                          <div>
+                            <span style="color: #718096; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 10px;">Project Details</span>
+                            <div style="font-size: 15px; color: #E2E8F0; white-space: pre-wrap; line-height: 1.7; background: #0E121C; padding: 20px; border-radius: 8px; border: 1px solid #232A3B;">${contact.message || 'No details provided.'}</div>
+                          </div>
 
-              <div style="margin-bottom: 16px;">
-                <span style="color: #94A3B8; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block;">Subject / Service</span>
-                <span style="font-size: 16px; color: #FFFFFF; font-weight: 600; margin-top: 3px; display: block;">${contact.subject || 'General Inquiry'}</span>
-              </div>
+                        </td>
+                      </tr>
+                    </table>
 
-              <div style="margin-bottom: 16px;">
-                <span style="color: #94A3B8; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block;">Submission Date &amp; Time</span>
-                <span style="font-size: 15px; color: #CBD5E1; margin-top: 3px; display: block;">${formattedDateTime}</span>
-              </div>
+                    ${fileButtonHtml}
 
-              <hr style="border: none; border-top: 1px solid #334155; margin: 20px 0;" />
-              
-              <div>
-                <span style="color: #94A3B8; font-size: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Message</span>
-                <div style="font-size: 15px; color: #F1F5F9; white-space: pre-wrap; line-height: 1.7; background: #0F172A; padding: 16px; border-radius: 6px; border: 1px solid #334155;">${contact.message || 'No message provided.'}</div>
-              </div>
+                    <div style="text-align: center; margin-top: 35px;">
+                      <p style="color: #4A5568; font-size: 12px; margin: 0;">
+                        🗓️ Submitted on: ${formattedDateTime}
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background: #0B0F19; padding: 25px; text-align: center; border-top: 1px solid #1A2235;">
+                    <p style="margin: 0 0 8px; color: #718096; font-size: 12px; font-weight: 500;">&copy; ${new Date().getFullYear()} Riwaz Studio. Secure Admin Portal.</p>
+                    <p style="margin: 0; color: #4A5568; font-size: 11px;">This is an automated encrypted notification. Do not reply directly.</p>
+                  </td>
+                </tr>
 
-            </div>
-
-            <p style="color: #94A3B8; font-size: 14px; text-align: center; margin: 30px 0 10px;">
-              ⚡ This submission has been permanently recorded in your MongoDB database and is visible in your Admin Panel.
-            </p>
-          </div>
-          
-          <!-- Footer -->
-          <div style="background: #0B0F19; padding: 20px; text-align: center; color: #64748B; font-size: 12px; border-top: 1px solid #1E293B;">
-            <p style="margin: 0 0 6px;">&copy; ${new Date().getFullYear()} Riwaz Studio Official Executive Portal. All rights reserved.</p>
-            <p style="margin: 0; color: #475569;">Automated Notification System • Do not reply directly to this automated email address</p>
-          </div>
-        </div>
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
@@ -105,7 +148,8 @@ export async function createContact(req, res, next) {
       `Phone Number: ${contact.phone || 'N/A'}\n` +
       `Subject / Service: ${contact.subject || 'N/A'}\n` +
       `Submission Date & Time: ${formattedDateTime}\n\n` +
-      `Message:\n${contact.message || 'N/A'}`;
+      `Message:\n${contact.message || 'N/A'}\n\n` +
+      (contact.referenceUrl ? `Reference File: ${contact.referenceUrl}\n` : '');
 
     // 3. Attempt sending email notification without disrupting DB saving or response
     try {

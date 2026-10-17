@@ -1,203 +1,218 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { FiCheckCircle, FiInfo, FiLayers, FiSliders, FiStar, FiZap } from 'react-icons/fi';
+import { FiArrowRight } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
 import Reveal from '../components/Reveal.jsx';
 
 const showcases = [
   {
     id: 'wedding',
-    title: 'Wedding Royalty & Bridal Glow',
-    subtitle: 'Warm luxury film tones with pristine skin recovery and atmosphere enrichment.',
-    before: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=78&fm=webp',
-    after: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=78&fm=webp&sat=30&vib=30&bri=5',
+    label: 'Wedding Editing',
+    title: 'Wedding Editing',
+    description: 'Natural skin retouching, refined color grading, balanced highlights, and enhanced details while preserving the original mood of the photograph.',
+    before: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=900&q=80',
+    after: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=900&q=80',
     beforeLabel: 'Raw Capture',
-    afterLabel: 'Bridal Film Grade',
-    highlights: ['Natural skin texture preservation', 'Warm champagne highlight recovery', 'Background distraction clean-up', 'Emotive film grain cadence']
+    afterLabel: 'Refined Visual',
+    details: [
+      'Natural skin texture preservation',
+      'Balanced exposure & highlights',
+      'Refined color grading',
+      'Clean, polished final finish'
+    ]
   },
   {
-    id: 'editorial',
-    title: 'Editorial Vogue & Beauty Polish',
-    subtitle: 'High-end commercial magazine retouching with surgical precision and depth.',
-    before: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=900&q=78&fm=webp',
-    after: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=900&q=78&fm=webp&contrast=20',
-    beforeLabel: 'Unretouched Studio Raw',
-    afterLabel: 'Magazine Editorial Cover',
-    highlights: ['Frequency separation skin sculpting', 'Micro-dodge and burn contours', 'Eye and hair clarity enhancement', 'Flawless color reproduction']
+    id: 'portrait',
+    label: 'Portrait Retouching',
+    title: 'Portrait Retouching',
+    description: 'High-end beauty retouching, refined complexion, subtle contouring, and razor-sharp facial details while retaining natural skin pores.',
+    before: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80',
+    after: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80',
+    beforeLabel: 'Raw Capture',
+    afterLabel: 'Refined Visual',
+    details: [
+      'High-frequency separation skin retouch',
+      'Micro dodge & burn facial sculpting',
+      'Iris, teeth, & hair clarity enhancement',
+      'Pore-preserving luxury finish'
+    ]
   },
   {
     id: 'cinematic',
-    title: 'Cinematic Color & Mood Grading',
-    subtitle: 'Transforming neutral raw photography into cinematic visual masterpieces with deep shadow cadence.',
-    before: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=900&q=78&fm=webp',
-    after: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=900&q=78&fm=webp',
-    beforeLabel: 'Flat Log Camera Curve',
-    afterLabel: 'Cinema LUT Palette',
-    highlights: ['Teal & Gold shadows separation', 'Atmospheric haze injection', 'Dynamic range compression', 'Selective subject luminescence']
+    label: 'Cinematic Color',
+    title: 'Cinematic Color',
+    description: 'Atmospheric film color grading, rich shadow depth, highlight roll-off, and evocative mood designed to make every scene look cinematic.',
+    before: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&w=900&q=80',
+    after: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&w=900&q=80',
+    beforeLabel: 'Raw Capture',
+    afterLabel: 'Refined Visual',
+    details: [
+      'Cinematic teal & warm gold palette',
+      'Dynamic range & contrast roll-off',
+      'Subject isolation & luminance balance',
+      'Analog film tone & subtle grain cadence'
+    ]
   },
   {
     id: 'restoration',
-    title: 'Antique Heritage Restoration',
-    subtitle: 'Reviving historical family archives, healing paper damage, and introducing lifelike authentic coloration.',
-    before: 'https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=900&q=78&fm=webp',
-    after: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=78&fm=webp',
-    beforeLabel: 'Faded Damaged Archive',
-    afterLabel: 'Restored & Digitized Master',
-    highlights: ['Scratch & dust spot eradication', 'AI facial reconstruction polish', 'Historic tone authentic restoration', 'Museum-grade preservation export']
-  },
-  {
-    id: 'commercial',
-    title: 'Commercial Luxury Product Polish',
-    subtitle: 'Flawless jewelry, watch, and advertising imagery engineered to drive high-converting ecommerce sales.',
-    before: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=78&fm=webp',
-    after: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=78&fm=webp',
-    beforeLabel: 'Uncut Product Raw',
-    afterLabel: 'High-Converting Campaign',
-    highlights: ['Precision pen-tool isolation', 'Reflection and glare balancing', 'Diamond & metal sparkle brilliance', 'True-to-life color accuracy']
+    label: 'Photo Restoration',
+    title: 'Photo Restoration',
+    description: 'Advanced digital restoration healing scratches, dust, water damage, and color degradation while resurrecting precious memories with clarity.',
+    before: 'https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=900&q=80',
+    after: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80',
+    beforeLabel: 'Raw Capture',
+    afterLabel: 'Refined Visual',
+    details: [
+      'Scratch, fold, & blemish eradication',
+      'AI facial reconstruction & sharpening',
+      'Vintage tone colorization & recovery',
+      'Museum-grade high-resolution export'
+    ]
   }
 ];
 
 export default function BeforeAfterPage() {
   const [activeTab, setActiveTab] = useState('wedding');
-  const currentShowcase = showcases.find((item) => item.id === activeTab);
+  const currentShowcase = showcases.find((item) => item.id === activeTab) || showcases[0];
 
   return (
-    <div className="min-h-screen pb-28 pt-36 overflow-hidden">
+    <>
       {/* Background ambient lighting */}
       <div className="pointer-events-none fixed -top-40 left-1/2 h-[500px] w-[1000px] -translate-x-1/2 rounded-full bg-champagne/10 blur-[140px] z-[-1]" />
       <div className="pointer-events-none fixed top-1/3 -right-40 h-[400px] w-[400px] rounded-full bg-violetGlow/10 blur-[120px] z-[-1]" />
 
-      <div className="container">
-        <Reveal>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-champagne animate-pulse" />
-            <p className="eyebrow">Interactive Atelier Showroom</p>
-          </div>
-          <h1 className="headline mt-4 max-w-5xl headline-3d-glow">
-            Drag through the magic of Riwaz craftsmanship.
-          </h1>
-          <p className="subhead mt-6 max-w-3xl">
-            Experience our pin-for-pin transformation precision. Every edit at Riwaz Studio is sculpted with layered color craft, high-frequency natural skin retention, and museum-grade tonal balance.
-          </p>
-        </Reveal>
+      <section className="section pt-36 section-3d">
+        <div className="container depth-layer">
+          <Reveal>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-champagne animate-pulse" />
+              <p className="eyebrow text-champagne text-xs sm:text-sm font-extrabold uppercase tracking-[0.25em]">
+                BEFORE & AFTER
+              </p>
+            </div>
+            <h1 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white headline-3d-glow leading-[1.12] max-w-4xl">
+              From Raw Captures <br className="hidden sm:inline" />
+              To Refined Visuals.
+            </h1>
+            <p className="subhead mt-4 max-w-3xl text-base sm:text-lg leading-relaxed text-white/75">
+              Explore real before-and-after transformations by Riwaz Studio. From natural retouching and clean color correction to cinematic grading and detailed enhancements, every image is refined with care while keeping its original character intact.
+            </p>
+          </Reveal>
 
-        {/* Interactive Category Tabs */}
-        <Reveal delay={0.15} className="mt-12">
-          <div className="no-scrollbar flex gap-3 overflow-x-auto pb-4">
-            {showcases.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`relative shrink-0 rounded-full px-6 py-3.5 text-sm font-extrabold transition-all duration-500 flex items-center gap-2.5 ${
-                    isActive
-                      ? 'text-ink shadow-[0_0_30px_rgba(244,214,144,0.6)] scale-105'
-                      : 'border border-white/12 bg-white/5 text-white/70 hover:border-champagne/40 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="active-showcase-tab"
-                      className="absolute inset-0 z-[-1] rounded-full bg-gradient-to-r from-champagne via-[#ffebaf] to-champagne"
-                      transition={{ type: 'spring', stiffness: 350, damping: 26 }}
+          {/* Interactive Category Tabs */}
+          <Reveal delay={0.15} className="mt-10">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
+              {showcases.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`group relative shrink-0 rounded-full px-6 py-2.5 sm:px-7 sm:py-3 text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 border ${
+                      isActive
+                        ? 'border-champagne bg-champagne text-ink shadow-[0_0_25px_rgba(244,214,144,0.5)] font-extrabold scale-[1.02]'
+                        : 'border-champagne/60 bg-black/40 text-white hover:border-champagne hover:text-champagne hover:bg-champagne/10 shadow-sm'
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="active-showcase-tab"
+                        className="absolute inset-0 z-[-1] rounded-full bg-champagne"
+                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Reveal>
+
+          {/* Showcase Display Area */}
+          <Reveal delay={0.25} className="mt-10">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentShowcase.id}
+                initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -20, filter: 'blur(8px)' }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
+                className="grid gap-8 lg:grid-cols-[1fr_1fr] items-stretch"
+              >
+                {/* Left: Interactive Slider */}
+                <div className="w-full flex items-center justify-center">
+                  <div className="w-full luxury-border rounded-[12px] overflow-hidden shadow-2xl">
+                    <BeforeAfterSlider
+                      before={currentShowcase.before}
+                      after={currentShowcase.after}
+                      beforeLabel={currentShowcase.beforeLabel}
+                      afterLabel={currentShowcase.afterLabel}
+                      aspectClassName="aspect-[3/4] sm:aspect-[4/5] min-h-[420px] sm:min-h-[500px]"
                     />
-                  )}
-                  <FiSliders className={isActive ? 'text-ink' : 'text-champagne'} />
-                  <span>{tab.title.split('&')[0].trim()}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Reveal>
-
-        {/* Showcase Display Box */}
-        <Reveal delay={0.25} className="mt-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentShowcase.id}
-              initial={{ opacity: 0, y: 25, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -25, filter: 'blur(10px)' }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="glass rounded-[16px] p-6 lg:p-10 border border-champagne/25 shadow-2xl"
-            >
-              <div className="grid gap-10 lg:grid-cols-[1fr_360px] items-center">
-                {/* Main Interactive Slider */}
-                <div className="w-full">
-                  <BeforeAfterSlider
-                    before={currentShowcase.before}
-                    after={currentShowcase.after}
-                    beforeLabel={currentShowcase.beforeLabel}
-                    afterLabel={currentShowcase.afterLabel}
-                  />
+                  </div>
                 </div>
 
-                {/* Technical Highlights Panel */}
-                <div className="flex flex-col justify-between h-full bg-ink/60 rounded-[12px] p-7 border border-white/10">
+                {/* Right: Technical Details Panel matching screenshot */}
+                <div className="rounded-[12px] border border-white/20 bg-black/40 p-6 sm:p-9 flex flex-col justify-between shadow-2xl backdrop-blur-md">
                   <div>
-                    <div className="inline-flex items-center gap-2 rounded-full bg-champagne/15 border border-champagne/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-champagne">
-                      <FiStar className="text-champagne" />
-                      <span>Atelier Suite</span>
-                    </div>
-                    <h2 className="mt-4 font-display text-3xl font-extrabold text-white">
+                    <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
                       {currentShowcase.title}
                     </h2>
-                    <p className="mt-4 text-sm leading-7 text-white/70">
-                      {currentShowcase.subtitle}
+                    <p className="mt-3.5 text-sm sm:text-base text-white/75 leading-relaxed">
+                      {currentShowcase.description}
                     </p>
+
+                    <div className="mt-8">
+                      <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                        EDITING DETAILS
+                      </h3>
+                      <div className="mt-3 h-[1px] w-full bg-white/15" />
+                      <ul className="mt-5 space-y-3.5">
+                        {currentShowcase.details.map((point) => (
+                          <li key={point} className="flex items-center gap-3 text-sm sm:text-[15px] font-medium text-white/90">
+                            <span className="text-champagne font-bold text-base shrink-0">☑</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
 
-                  <div className="mt-8">
-                    <h3 className="text-xs font-extrabold uppercase tracking-widest text-champagne/80 flex items-center gap-2 border-b border-white/10 pb-2">
-                      <FiLayers />
-                      <span>Retouching Architecture</span>
-                    </h3>
-                    <ul className="mt-4 grid gap-3">
-                      {currentShowcase.highlights.map((point) => (
-                        <li key={point} className="flex items-start gap-2.5 text-xs font-semibold text-white/85">
-                          <FiCheckCircle className="text-champagne text-sm shrink-0 mt-0.5" />
-                          <span className="leading-5">{point}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mt-10 pt-6 border-t border-white/10 flex flex-col gap-3">
-                    <a
-                      href="/contact"
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-champagne py-3.5 px-6 font-black uppercase tracking-wider text-xs text-ink transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_#f4d690]"
+                  <div className="mt-10 pt-6">
+                    <Link
+                      to="/contact"
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-champagne py-4 px-8 font-extrabold uppercase tracking-wider text-xs sm:text-sm text-ink transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(244,214,144,0.6)]"
                     >
-                      <FiZap className="text-base" />
-                      <span>Commission This Style</span>
-                    </a>
-                    <p className="text-[11px] text-center text-white/50 flex items-center justify-center gap-1">
-                      <FiInfo /> Turnaround: 24 to 48 hours with client review loop.
+                      <span>REQUEST THIS EDIT</span>
+                      <FiArrowRight className="text-base" />
+                    </Link>
+                    <p className="mt-3 text-center text-xs font-bold uppercase tracking-widest text-white/50">
+                      DELIVERY ( 24 to 48 hours )
                     </p>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </Reveal>
+              </motion.div>
+            </AnimatePresence>
+          </Reveal>
 
-        {/* Bottom Callout */}
-        <Reveal delay={0.35} className="mt-20 text-center max-w-2xl mx-auto">
-          <h3 className="font-display text-3xl font-bold text-white">
-            Have an entire catalog or wedding album?
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-white/70">
-            We build custom tailored LUT profiles and dedicated editing teams for studios producing high volumes.
-          </p>
-          <a
-            href="/contact"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-champagne hover:underline"
-          >
-            Inquire About Bulk Studio Retaining Arrangements →
-          </a>
-        </Reveal>
-      </div>
-    </div>
+          {/* Bottom Catalog Consultation CTA */}
+          <Reveal delay={0.35} className="mt-20 text-center max-w-2xl mx-auto">
+            <h3 className="font-display text-2xl sm:text-3xl font-bold text-white">
+              Have an entire catalog or wedding album?
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-white/70">
+              We build custom tailored LUT profiles and dedicated editing teams for studios producing high volumes.
+            </p>
+            <Link
+              to="/contact"
+              className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-champagne hover:underline"
+            >
+              Inquire About Bulk Studio Retaining Arrangements →
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+    </>
   );
 }
-

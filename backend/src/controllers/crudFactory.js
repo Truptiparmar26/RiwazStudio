@@ -26,6 +26,9 @@ export function list(Model, defaultSort = { createdAt: -1 }) {
         }
       }
       if (req.query.search) query.$text = { $search: req.query.search };
+      if (Model.db.readyState !== 1) {
+        return ApiResponse.ok(res, 'Database initializing or offline', getPagingData([], 0, page, limit));
+      }
       const [items, total] = await Promise.all([
         Model.find(query).sort(defaultSort).skip(skip).limit(limit).lean(),
         Model.countDocuments(query)

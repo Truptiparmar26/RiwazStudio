@@ -6,19 +6,21 @@ export default function BeforeAfterSlider({
   before = 'https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=900&q=78&fm=webp',
   after = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=78&fm=webp',
   beforeLabel = 'Original Raw',
-  afterLabel = 'Riwaz Studio Polish'
+  afterLabel = 'Riwaz Studio Polish',
+  aspectClassName = 'aspect-[16/10]',
+  className = ''
 }) {
   const [value, setValue] = useState(52);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div 
-      className="group relative overflow-hidden rounded-[12px] border border-champagne/35 bg-charcoal shadow-[0_30px_90px_rgba(0,0,0,0.7)] transition-all duration-500 hover:border-champagne/70 hover:shadow-[0_40px_110px_rgba(0,0,0,0.85),0_0_60px_rgba(244,214,144,0.15)]"
+      className={`group relative overflow-hidden rounded-[12px] border border-champagne/35 bg-charcoal shadow-[0_30px_90px_rgba(0,0,0,0.7)] transition-all duration-500 hover:border-champagne/70 hover:shadow-[0_40px_110px_rgba(0,0,0,0.85),0_0_60px_rgba(244,214,144,0.15)] ${className}`}
       onContextMenu={(event) => event.preventDefault()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[16/10] w-full min-h-[220px] md:min-h-[360px] overflow-hidden select-none max-w-full">
+      <div className={`relative ${aspectClassName} w-full min-h-[220px] md:min-h-[360px] overflow-hidden select-none max-w-full`}>
         {/* After (Edited) Image (Full Background) */}
         <img
           src={after}
