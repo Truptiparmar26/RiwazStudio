@@ -76,9 +76,9 @@ export default function Home() {
             </div>
             <Link to="/services" className="font-bold text-champagne">View all services</Link>
           </Reveal>
-          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3 items-stretch">
             {serviceItems.slice(0, 6).map((service, i) => (
-              <motion.div key={service.id || service.title} className="service-card-3d" initial={{ opacity: 0, y: 50, rotateY: -10, scale: 0.96 }} whileInView={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.09, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
+              <motion.div key={service.id || service.title} className="service-card-3d h-full" initial={{ opacity: 0, y: 50, rotateY: -10, scale: 0.96 }} whileInView={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.09, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
                 <ServiceCard service={service} />
               </motion.div>
             ))}

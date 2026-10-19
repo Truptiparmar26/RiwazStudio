@@ -16,10 +16,17 @@ import {
   FiCamera,
   FiShield,
   FiTarget,
-  FiUserCheck
+  FiUserCheck,
+  FiInstagram
 } from 'react-icons/fi';
 
-const timeline = ['Raw image audit', 'Color direction board', 'Detail retouching', 'Client proofing', 'Delivery exports'];
+const timeline = [
+  'Raw Image Review',
+  'Color & Tone Correction',
+  'Skin & Detail Retouching',
+  'Final Quality Check',
+  'Client-Ready Export'
+];
 
 const defaultAbout = [
   {
@@ -28,56 +35,56 @@ const defaultAbout = [
     name: "Riwaz Studio",
     role: "Creative Photo Editor",
     image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-    bio: "Behind every beautifully edited photograph is a vision, attention to detail, and a passion for creativity. At Riwaz Studio, every image is carefully refined to preserve its natural emotion while enhancing its visual impact.\n\nFrom portrait retouching and color correction to creative photo manipulation and professional enhancements, the goal is simple — to make every photograph look its absolute best.",
+    bio: "I'm Tejas, the founder and photo editor behind Riwaz Studio. With a passion for photography, creativity, and visual storytelling, I focus on turning raw captures into refined and meaningful visuals. My work includes wedding photo editing, cinematic color grading, natural retouching, portrait enhancement, and creative social media designs.\n\nAt Riwaz Studio, every photograph is carefully crafted with attention to detail, balanced colors, and a natural premium finish. I believe great editing should enhance the beauty already present in an image while keeping its emotion, character, and story intact.",
     personalStatement: "I believe great editing is not about changing a photograph completely — it is about bringing out the beauty that is already there.",
     quote: "Every photograph has a story.\nMy job is to make that story unforgettable.",
-    expertise: "Portrait Retouching, Color Correction, Photo Manipulation, Background Removal, Wedding & Event Editing, Creative Photo Enhancement",
+    expertise: "Wedding Photo Editing, Color Correction & Grading, Skin Retouching, Background & Object Removal, Pre-Wedding & Portrait Editing, Instagram Post Design",
     ctaHeading: "Have a Photo That Deserves More?",
-    ctaText: "Let’s transform your photographs into visuals you’ll love to share and remember.",
+    ctaText: "Let’s turn your photographs into polished visuals you’ll be proud to share.",
     status: "published",
   },
 ];
 
 const defaultExpertiseCards = [
   {
-    title: "Portrait Retouching",
-    desc: "Precision skin texture recovery and frequency separation without losing authentic human warmth.",
-    icon: FiUserCheck,
+    title: "Wedding Photo Editing",
+    desc: "Complete wedding photo editing with natural skin retouching, beautiful color correction, cinematic tones, and consistent results across the entire wedding story.",
+    icon: FiHeart,
     color: "from-amber-400 to-amber-600",
     glow: "rgba(245,158,11,0.2)"
   },
   {
-    title: "Color Correction",
-    desc: "Balancing white tone, exposure, and lighting consistency across complex multi-camera shoots.",
+    title: "Color Correction & Grading",
+    desc: "Balanced colors, accurate skin tones, refined contrast, and cinematic grading designed to give every photograph a consistent and premium look.",
     icon: FiSliders,
     color: "from-blue-400 to-indigo-600",
     glow: "rgba(99,102,241,0.2)"
   },
   {
-    title: "Photo Manipulation",
-    desc: "Seamless compositing, object removal, and mood alterations with uncompromised realism.",
-    icon: FiScissors,
+    title: "Skin Retouching",
+    desc: "Natural skin retouching that removes distractions while preserving real skin texture, expressions, and the authentic character of every person.",
+    icon: FiUserCheck,
     color: "from-purple-400 to-pink-600",
     glow: "rgba(168,85,247,0.2)"
   },
   {
-    title: "Background Removal",
-    desc: "Flawless isolating, mask edging, and background replacement tailored for high-end commercial use.",
-    icon: FiImage,
+    title: "Background & Object Removal",
+    desc: "Clean and precise background removal, unwanted object cleanup, and distraction removal for a polished and professional final image.",
+    icon: FiScissors,
     color: "from-emerald-400 to-teal-600",
     glow: "rgba(16,185,129,0.2)"
   },
   {
-    title: "Wedding & Event Editing",
-    desc: "Cinematic batch grading and emotional consistency across full wedding photo story sequences.",
-    icon: FiHeart,
+    title: "Pre-Wedding & Portrait Editing",
+    desc: "Creative editing for pre-wedding, couple, portrait, and lifestyle photographs with refined tones, natural retouching, and a signature visual finish.",
+    icon: FiCamera,
     color: "from-rose-400 to-red-600",
     glow: "rgba(244,63,94,0.2)"
   },
   {
-    title: "Creative Enhancement",
-    desc: "Artistic atmosphere boosts, Dodge & Burn sculpting, and bespoke look formulations for campaigns.",
-    icon: FiZap,
+    title: "Instagram Post Design",
+    desc: "Premium social media designs created for photographers and brands, including wedding posts, carousel designs, promotional creatives, and Instagram-ready visuals.",
+    icon: FiInstagram,
     color: "from-amber-300 to-yellow-500",
     glow: "rgba(252,211,77,0.25)"
   },
@@ -87,27 +94,27 @@ const approachSteps = [
   {
     number: "01",
     title: "Understand",
-    desc: "Understanding the story, mood, and purpose behind every photograph before making a single adjustment."
+    desc: "We first understand the photograph, style, mood, and your editing requirements before making any adjustments."
   },
   {
     number: "02",
     title: "Refine",
-    desc: "Carefully enhancing micro-details, skin texture, color harmony, lighting contrast, and spatial composition."
+    desc: "We carefully refine colors, skin tones, details, lighting, and composition while keeping the image natural."
   },
   {
     number: "03",
     title: "Perfect",
-    desc: "Delivering a breath-taking, polished final image while rigorously keeping it natural and authentic."
+    desc: "The final image is polished, consistent, and ready to be delivered, shared, or published."
   }
 ];
 
 const whyPoints = [
-  { label: "Attention to Detail", desc: "Every pixel, shadow grade, and highlight curve is inspected at 200% zoom.", icon: FiEye },
-  { label: "Natural & Professional Results", desc: "We enhance reality rather than replacing it with synthetic filters.", icon: FiAward },
-  { label: "Creative Vision", desc: "Deep artistic intuition developed through thousands of high-profile commissions.", icon: FiStar },
-  { label: "High-Quality Editing", desc: "Non-destructive 16-bit workflows preserving maximum dynamic print range.", icon: FiShield },
-  { label: "Client-Focused Approach", desc: "Collaborative revision loops until your personal artistic mood is reached.", icon: FiTarget },
-  { label: "Consistent Results", desc: "Uniform color grading and visual identity across hundreds of event captures.", icon: FiCheckCircle },
+  { label: "Attention to Detail", desc: "Every image is carefully reviewed before delivery.", icon: FiEye },
+  { label: "Natural Retouching", desc: "Clean enhancement without losing the real character of the photograph.", icon: FiAward },
+  { label: "Consistent Editing", desc: "A uniform visual style across your entire project.", icon: FiSliders },
+  { label: "Professional Quality", desc: "High-quality edits prepared for print and digital use.", icon: FiShield },
+  { label: "Photographer Focused", desc: "Editing designed to fit your workflow and creative style.", icon: FiCamera },
+  { label: "Reliable Delivery", desc: "Clear communication and organized project delivery.", icon: FiCheckCircle },
 ];
 
 export default function About() {
@@ -282,16 +289,16 @@ export default function About() {
               About Riwaz Studio
             </motion.p>
             <motion.h1 className="headline mt-4 max-w-5xl headline-3d-glow text-white font-extrabold" initial={{ opacity: 0, y: 30, rotateX: 12, filter: 'blur(8px)' }} whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }} viewport={{ once: true }} transition={{ delay: 0.15, duration: 1.1, ease: [0.25, 0.46, 0.45, 0.94] }}>
-              Turning Moments Into Timeless Visual Stories.
+              Turning Your Photographs Into Timeless Visuals.
             </motion.h1>
             <motion.p className="mt-6 text-lg sm:text-xl leading-8 text-white/75 max-w-3xl font-light" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3, duration: 0.9 }}>
-              Riwaz Studio is a creative photo editing studio focused on transforming ordinary photographs into polished, expressive, and visually captivating images.
+              Riwaz Studio helps photographers turn their captures into polished, memorable visuals through professional editing, cinematic color grading, retouching, and creative design.
             </motion.p>
           </Reveal>
 
-          <div className="mt-14 grid gap-6 lg:grid-cols-3">
+          <div className="mt-14 grid gap-6 lg:grid-cols-3 items-stretch">
             {['Mission', 'Vision', 'Studio Story'].map((title, index) => (
-              <Reveal key={title} delay={0.35 + index * 0.12}>
+              <Reveal key={title} delay={0.35 + index * 0.12} className="h-full">
                 <motion.div
                   className="glass rounded-[12px] p-7 glass-3d premium-glow shimmer-border mission-card-3d h-full flex flex-col justify-between"
                   initial={{ opacity: 0, y: 50, scale: 0.93 }}
@@ -299,13 +306,13 @@ export default function About() {
                   viewport={{ once: true, margin: '-50px' }}
                   transition={{ delay: 0.35 + index * 0.12, duration: 0.9 }}
                 >
-                  <div>
+                  <div className="flex-1 flex flex-col">
                     <span className="text-[11px] font-extrabold uppercase tracking-widest text-champagne/70 block mb-1">Our Purpose</span>
-                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">{title}</h2>
-                    <p className="mt-4 leading-7 text-white/70 text-sm sm:text-base font-light">
-                      {index === 0 && "To empower photographers with a dependable post-production partner that protects organic emotion while making every frame feel cinematic, polished, and commercially ready."}
-                      {index === 1 && "To set the global standard for high-end digital retouching by blending traditional photography sensibility with state-of-the-art grading craft."}
-                      {index === 2 && "Born out of an obsession with timeless visual storytelling, Riwaz Studio evolved into an editorial powerhouse trusted by elite image makers worldwide."}
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-white min-h-[2.5rem] flex items-center">{title}</h2>
+                    <p className="mt-4 leading-7 text-white/70 text-sm sm:text-base font-light flex-1">
+                      {index === 0 && "To transform every photograph into a refined visual that feels natural, timeless, and beautifully finished — while preserving the emotion behind the moment."}
+                      {index === 1 && "To become a trusted editing partner for photographers and creative professionals, known for premium quality, consistent results, and attention to every detail."}
+                      {index === 2 && "Riwaz Studio was created with a passion for photography, creativity, and meaningful details. We believe great editing should enhance a photograph, not change its soul. Every image we work on is crafted with care, precision, and a distinctive visual style."}
                     </p>
                   </div>
                   <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-champagne/80 font-semibold uppercase tracking-wider">
@@ -364,7 +371,7 @@ export default function About() {
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
                   </span>
                   <span className="text-xs font-bold text-white tracking-wide uppercase font-sans">
-                    {editor.role || "Creative Photo Editor"}
+                    {editor.role || "Founder &  Photo Editor"}
                   </span>
                 </motion.div>
               </div>
@@ -389,10 +396,10 @@ export default function About() {
                 ) : (
                   <>
                     <p>
-                      Behind every beautifully edited photograph is a vision, attention to detail, and a passion for creativity. At Riwaz Studio, every image is carefully refined to preserve its natural emotion while enhancing its visual impact.
+                      I'm Tejas, the founder and photo editor behind Riwaz Studio. With a passion for photography, creativity, and visual storytelling, I focus on turning raw captures into refined and meaningful visuals. My work includes wedding photo editing, cinematic color grading, natural retouching, portrait enhancement, and creative social media designs.
                     </p>
                     <p>
-                      From portrait retouching and color correction to creative photo manipulation and professional enhancements, the goal is simple — to make every photograph look its absolute best.
+                      At Riwaz Studio, every photograph is carefully crafted with attention to detail, balanced colors, and a natural premium finish. I believe great editing should enhance the beauty already present in an image while keeping its emotion, character, and story intact.
                     </p>
                   </>
                 )}
@@ -421,27 +428,30 @@ export default function About() {
       {/* 3. WHAT I DO ("Creative Expertise") */}
       <section className="section py-20 relative">
         <div className="container">
-          <Reveal className="text-center max-w-3xl mx-auto">
+          <Reveal className="text-center max-w-4xl mx-auto">
             <p className="eyebrow">What I Do</p>
             <h2 className="headline mt-3 text-3xl sm:text-4xl lg:text-5xl text-white font-extrabold">
               Creative Expertise
             </h2>
-            <p className="mt-4 text-white/65 text-base sm:text-lg">
-              Precision digital engineering designed to elevate commercial imagery, private wedding archives, and editorial portfolios.
+            <p className="mt-4 text-white/75 text-base sm:text-lg leading-relaxed font-light">
+              Professional photo editing crafted with precision, natural retouching, and a premium visual finish
+              <span className="block mt-1 text-white/65">
+                — helping photographers turn their captures into polished, client-ready images.
+              </span>
             </p>
           </Reveal>
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {defaultExpertiseCards.map((card, i) => {
               const Icon = card.icon;
               return (
-                <Reveal key={card.title} delay={0.1 * i}>
+                <Reveal key={card.title} delay={0.1 * i} className="h-full">
                   <motion.div
                     className="glass rounded-[14px] p-7 glass-3d premium-glow shimmer-border flex flex-col justify-between h-full group cursor-default"
                     whileHover={{ y: -8, scale: 1.02 }}
                     transition={{ duration: 0.35, ease: "easeOut" }}
                   >
-                    <div>
+                    <div className="flex-1 flex flex-col">
                       <div className="mb-6 flex items-center justify-between">
                         <div className={`grid h-14 w-14 place-items-center rounded-[12px] bg-gradient-to-br ${card.color} text-white shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`} style={{ boxShadow: `0 10px 25px ${card.glow}` }}>
                           <Icon className="text-2xl text-white drop-shadow-sm" />
@@ -450,10 +460,10 @@ export default function About() {
                           0{i + 1}
                         </span>
                       </div>
-                      <h3 className="font-display text-2xl font-bold text-white group-hover:text-champagne transition-colors duration-300">
+                      <h3 className="font-display text-2xl font-bold text-white group-hover:text-champagne transition-colors duration-300 min-h-[3.8rem] flex items-start">
                         {card.title}
                       </h3>
-                      <p className="mt-3.5 leading-7 text-white/68 text-sm sm:text-base">
+                      <p className="mt-3.5 leading-7 text-white/68 text-sm sm:text-base font-light flex-1">
                         {card.desc}
                       </p>
                     </div>
@@ -472,33 +482,36 @@ export default function About() {
       {/* 4. MY APPROACH */}
       <section className="section py-20 bg-white/[0.015] border-y border-white/5 relative">
         <div className="container">
-          <Reveal className="text-center max-w-3xl mx-auto">
+          <Reveal className="text-center max-w-4xl mx-auto">
             <p className="eyebrow">Workflow & Philosophy</p>
             <h2 className="headline mt-3 text-3xl sm:text-4xl lg:text-5xl text-white font-extrabold">
               My Approach to Editing
             </h2>
-            <p className="mt-4 text-white/65 text-base sm:text-lg">
-              A structured, highly consultative process ensuring that every photograph retains its genuine spirit while gaining extraordinary aesthetic impact.
+            <p className="mt-4 text-white/75 text-base sm:text-lg leading-relaxed font-light">
+              Every photograph is handled with care — from the first look to the final export, keeping the image natural,
+              <span className="block mt-1 text-white/65">
+                polished, and true to the photographer's vision.
+              </span>
             </p>
           </Reveal>
 
-          <div className="mt-16 grid gap-8 md:grid-cols-3 relative">
+          <div className="mt-16 grid gap-8 md:grid-cols-3 relative items-stretch">
             {/* Connecting line for desktop */}
             <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-champagne/20 via-champagne/60 to-champagne/20 -z-0" />
 
             {approachSteps.map((step, index) => (
-              <Reveal key={step.number} delay={index * 0.2}>
+              <Reveal key={step.number} delay={index * 0.2} className="h-full">
                 <motion.div
-                  className="glass rounded-[14px] p-8 glass-3d premium-glow shimmer-border text-center flex flex-col items-center relative z-10 bg-ink/90"
+                  className="glass rounded-[14px] p-8 glass-3d premium-glow shimmer-border text-center flex flex-col items-center justify-start h-full relative z-10 bg-ink/90 min-h-[300px]"
                   whileHover={{ y: -6 }}
                 >
-                  <div className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-champagne to-amber-500 font-display text-2xl font-black text-black shadow-[0_0_30px_rgba(244,214,144,0.4)] mb-6">
+                  <div className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-champagne to-amber-500 font-display text-2xl font-black text-black shadow-[0_0_30px_rgba(244,214,144,0.4)] mb-6 shrink-0">
                     {step.number}
                   </div>
-                  <h3 className="font-display text-2xl font-bold text-white mb-3">
+                  <h3 className="font-display text-2xl font-bold text-white mb-3 min-h-[2.5rem] flex items-center justify-center">
                     {step.title}
                   </h3>
-                  <p className="leading-7 text-white/70 text-sm sm:text-base font-light">
+                  <p className="leading-7 text-white/70 text-sm sm:text-base font-light flex-1 flex items-start justify-center">
                     {step.desc}
                   </p>
                 </motion.div>
@@ -527,8 +540,8 @@ export default function About() {
                 className="glass rounded-[14px] p-8 glass-3d timeline-card-3d premium-glow shimmer-border h-full flex flex-col justify-between"
               >
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-champagne/70">Production Stages</span>
-                  <h3 className="font-display text-3xl font-bold text-white mt-1">Interactive Timeline</h3>
+                  <span className="text-xs font-bold uppercase tracking-widest text-champagne/70">Editing Process</span>
+                  <h3 className="font-display text-3xl font-bold text-white mt-1">Our Editing Workflow</h3>
                 </div>
                 <div className="mt-8 grid gap-4">
                   {timeline.map((item, index) => (
@@ -540,7 +553,7 @@ export default function About() {
                         {index + 1}
                       </span>
                       <div className="step-line h-px flex-1 bg-white/15" />
-                      <strong className="step-label w-48 text-right text-sm sm:text-base font-semibold text-white/85 group-hover:text-champagne transition-colors">
+                      <strong className="step-label text-right text-sm sm:text-base font-semibold text-white/85 group-hover:text-champagne transition-colors">
                         {item}
                       </strong>
                     </motion.div>
@@ -560,28 +573,28 @@ export default function About() {
             <h2 className="headline mt-3 text-3xl sm:text-4xl lg:text-5xl text-white font-extrabold">
               Why Riwaz Studio
             </h2>
-            <p className="mt-4 text-white/65 text-base sm:text-lg">
-              Uncompromising visual integrity combined with modern collaboration makes us the premiere destination for selective professionals.
+            <p className="mt-4 text-white/70 text-base sm:text-lg leading-relaxed font-light">
+              Professional editing, attention to detail, and a natural creative approach come together to deliver polished visuals that photographers can confidently share with their clients.
             </p>
           </Reveal>
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {whyPoints.map((point, idx) => {
               const Icon = point.icon;
               return (
-                <Reveal key={point.label} delay={idx * 0.08}>
+                <Reveal key={point.label} delay={idx * 0.08} className="h-full">
                   <motion.div 
-                    className="glass rounded-[12px] p-6 glass-3d premium-glow shimmer-border flex items-start gap-4 group"
+                    className="glass rounded-[12px] p-6 glass-3d premium-glow shimmer-border flex items-start gap-4 group h-full"
                     whileHover={{ x: 6, borderColor: "rgba(244,214,144,0.4)" }}
                   >
                     <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[10px] bg-champagne/15 text-champagne border border-champagne/30 group-hover:bg-champagne group-hover:text-ink transition-colors duration-300 shadow-sm">
                       <Icon className="text-xl" />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-white group-hover:text-champagne transition-colors">
+                    <div className="flex-1 flex flex-col justify-between h-full">
+                      <h3 className="font-bold text-lg text-white group-hover:text-champagne transition-colors min-h-[1.75rem]">
                         {point.label}
                       </h3>
-                      <p className="mt-2 text-sm text-white/65 leading-6 font-light">
+                      <p className="mt-2 text-sm text-white/65 leading-6 font-light flex-1">
                         {point.desc}
                       </p>
                     </div>
@@ -637,7 +650,7 @@ export default function About() {
                 {editor.ctaHeading || "Have a Photo That Deserves More?"}
               </h2>
               <p className="mt-5 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto font-light leading-8">
-                {editor.ctaText || "Let’s transform your photographs into visuals you’ll love to share and remember."}
+                {editor.ctaText || "Let’s turn your photographs into polished visuals you’ll be proud to share."}
               </p>
               
               <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
