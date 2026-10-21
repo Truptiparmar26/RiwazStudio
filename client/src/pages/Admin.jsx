@@ -85,10 +85,10 @@ const fallback = {
   about: [
     {
       id: "about-editor",
-      title: "Riwaz Studio",
-      name: "Riwaz Studio",
-      role: "Creative Photo Editor",
-      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+      title: "Tejas Patel",
+      name: "Tejas Patel",
+      role: "Founder & Wedding Photo Editor",
+      image: "/editor-portrait.jpg",
       bio: "I'm Tejas, the founder and photo editor behind Riwaz Studio. With a passion for photography, creativity, and visual storytelling, I focus on turning raw captures into refined and meaningful visuals. My work includes wedding photo editing, cinematic color grading, natural retouching, portrait enhancement, and creative social media designs.\n\nAt Riwaz Studio, every photograph is carefully crafted with attention to detail, balanced colors, and a natural premium finish. I believe great editing should enhance the beauty already present in an image while keeping its emotion, character, and story intact.",
       personalStatement: "I believe great editing is not about changing a photograph completely — it is about bringing out the beauty that is already there.",
       quote: "Every photograph has a story.\nMy job is to make that story unforgettable.",

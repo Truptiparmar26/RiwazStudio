@@ -311,6 +311,33 @@ export function loadCollection(type, fallback = []) {
         if (updated) {
           localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
         }
+      } else if (type === 'about') {
+        let updated = false;
+        raw = raw.map((item) => {
+          let modified = false;
+          let newItem = { ...item };
+          if (newItem.image && newItem.image.includes('photo-1534528741775-53994a69daeb')) {
+            newItem.image = fallback[0]?.image || '/editor-portrait.jpg';
+            modified = true;
+          }
+          if (newItem.name === 'Riwaz Studio' || !newItem.name) {
+            newItem.name = 'Tejas Patel';
+            newItem.title = 'Tejas Patel';
+            modified = true;
+          }
+          if (newItem.bio && newItem.bio.includes('Behind every beautifully edited photograph')) {
+            newItem.bio = fallback[0]?.bio || newItem.bio;
+            modified = true;
+          }
+          if (modified) {
+            updated = true;
+            return newItem;
+          }
+          return item;
+        });
+        if (updated) {
+          localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
+        }
       } else {
         const rawNames = new Set(
           raw.map((item) => (item.title || item.name || item.clientName || '').trim().toLowerCase()).filter(Boolean)

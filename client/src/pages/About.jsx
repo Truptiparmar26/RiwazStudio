@@ -3,6 +3,7 @@ import Reveal from '../components/Reveal.jsx';
 import PreloadedImage from '../components/PreloadedImage.jsx';
 import { stats } from '../data/content.js';
 import { useApiCollection } from '../utils/siteStore.js';
+import defaultEditorImg from '../assets/editor-portrait.jpg';
 import {
   FiSliders,
   FiEye,
@@ -20,27 +21,21 @@ import {
   FiInstagram
 } from 'react-icons/fi';
 
-const timeline = [
-  'Raw Image Review',
-  'Color & Tone Correction',
-  'Skin & Detail Retouching',
-  'Final Quality Check',
-  'Client-Ready Export'
-];
+const timeline = ['Raw image audit', 'Color direction board', 'Detail retouching', 'Client proofing', 'Delivery exports'];
 
 const defaultAbout = [
   {
     id: "about-editor",
-    title: "Riwaz Studio",
-    name: "Riwaz Studio",
-    role: "Creative Photo Editor",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    title: "Tejas Patel",
+    name: "Tejas Patel",
+    role: "Founder & Wedding Photo Editor",
+    image: defaultEditorImg,
     bio: "I'm Tejas, the founder and photo editor behind Riwaz Studio. With a passion for photography, creativity, and visual storytelling, I focus on turning raw captures into refined and meaningful visuals. My work includes wedding photo editing, cinematic color grading, natural retouching, portrait enhancement, and creative social media designs.\n\nAt Riwaz Studio, every photograph is carefully crafted with attention to detail, balanced colors, and a natural premium finish. I believe great editing should enhance the beauty already present in an image while keeping its emotion, character, and story intact.",
     personalStatement: "I believe great editing is not about changing a photograph completely — it is about bringing out the beauty that is already there.",
     quote: "Every photograph has a story.\nMy job is to make that story unforgettable.",
     expertise: "Wedding Photo Editing, Color Correction & Grading, Skin Retouching, Background & Object Removal, Pre-Wedding & Portrait Editing, Instagram Post Design",
     ctaHeading: "Have a Photo That Deserves More?",
-    ctaText: "Let’s turn your photographs into polished visuals you’ll be proud to share.",
+    ctaText: "Let’s transform your photographs into visuals you’ll love to share and remember.",
     status: "published",
   },
 ];
@@ -109,21 +104,22 @@ const approachSteps = [
 ];
 
 const whyPoints = [
-  { label: "Attention to Detail", desc: "Every image is carefully reviewed before delivery.", icon: FiEye },
-  { label: "Natural Retouching", desc: "Clean enhancement without losing the real character of the photograph.", icon: FiAward },
-  { label: "Consistent Editing", desc: "A uniform visual style across your entire project.", icon: FiSliders },
-  { label: "Professional Quality", desc: "High-quality edits prepared for print and digital use.", icon: FiShield },
-  { label: "Photographer Focused", desc: "Editing designed to fit your workflow and creative style.", icon: FiCamera },
-  { label: "Reliable Delivery", desc: "Clear communication and organized project delivery.", icon: FiCheckCircle },
+  { label: "Attention to Detail", desc: "Every pixel, shadow grade, and highlight curve is inspected at 200% zoom.", icon: FiEye },
+  { label: "Natural & Professional Results", desc: "We enhance reality rather than replacing it with synthetic filters.", icon: FiAward },
+  { label: "Creative Vision", desc: "Deep artistic intuition developed through thousands of high-profile commissions.", icon: FiStar },
+  { label: "High-Quality Editing", desc: "Non-destructive 16-bit workflows preserving maximum dynamic print range.", icon: FiShield },
+  { label: "Client-Focused Approach", desc: "Collaborative revision loops until your personal artistic mood is reached.", icon: FiTarget },
+  { label: "Consistent Results", desc: "Uniform color grading and visual identity across hundreds of event captures.", icon: FiCheckCircle },
 ];
 
 export default function About() {
   const { items } = useApiCollection('about', defaultAbout);
   const editor = items[0] || defaultAbout[0];
-
-  const bioParagraphs = (editor.bio || defaultAbout[0].bio)
-    .split("\n")
-    .filter((p) => p.trim() !== "");
+  const editorName = editor.name && editor.name !== "Riwaz Studio" ? editor.name : "Tejas Patel";
+  const rawBio = editor.bio && !editor.bio.includes("Behind every beautifully") 
+    ? editor.bio 
+    : defaultAbout[0].bio;
+  const bioParagraphs = rawBio.split("\n").filter((p) => p.trim() !== "");
 
   return (
     <>
@@ -252,33 +248,6 @@ export default function About() {
         .stat-float-2 { animation: subtle-float 7s ease-in-out 1.2s infinite; }
         .stat-float-3 { animation: subtle-float 7s ease-in-out 2.4s infinite; }
         .stat-float-4 { animation: subtle-float 7s ease-in-out 3.6s infinite; }
-
-        .editor-portrait-glow {
-          position: relative;
-          z-index: 1;
-        }
-        .editor-portrait-glow::before {
-          content: '';
-          position: absolute;
-          inset: -3px;
-          border-radius: 9999px;
-          background: linear-gradient(135deg, rgba(168,85,247,0.7), rgba(59,130,246,0.6), rgba(244,214,144,0.8), rgba(16,185,129,0.5));
-          filter: blur(8px);
-          opacity: 0.85;
-          z-index: -1;
-          transition: all 0.7s ease;
-          animation: portrait-rotate 10s linear infinite;
-        }
-        .editor-portrait-glow:hover::before {
-          filter: blur(14px);
-          opacity: 1;
-          transform: scale(1.02);
-        }
-        @keyframes portrait-rotate {
-          0% { filter: hue-rotate(0deg) blur(10px); }
-          50% { filter: hue-rotate(45deg) blur(12px); }
-          100% { filter: hue-rotate(0deg) blur(10px); }
-        }
       `}</style>
 
       {/* 1. HERO SECTION */}
@@ -345,34 +314,38 @@ export default function About() {
                 THE EDITOR
               </motion.span>
 
-              <div className="relative group p-3 sm:p-4">
-                <div className="editor-portrait-glow rounded-full p-1.5 bg-gradient-to-br from-purple-500/40 via-champagne/40 to-blue-500/40 shadow-2xl">
-                  <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden border-4 border-white/15 bg-ink shadow-2xl">
-                    <PreloadedImage
-                      src={editor.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80"}
-                      alt={editor.name || "The Editor"}
-                      containerClassName="w-full h-full"
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 filter contrast-[1.05] brightness-95"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
-                  </div>
+              <div className="relative group p-2 sm:p-4">
+                {/* Circular Portrait Frame with Crisp White Border */}
+                <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden border-2 border-white/80 bg-ink shadow-[0_20px_50px_rgba(0,0,0,0.85)] transition-all duration-500 group-hover:border-white">
+                  <PreloadedImage
+                    src={editor.image && !editor.image.includes('photo-1534528741775-53994a69daeb') ? editor.image : defaultEditorImg}
+                    alt={editor.name || "Founder & Wedding Photo Editor"}
+                    containerClassName="w-full h-full"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 filter contrast-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-40 group-hover:opacity-20 transition-opacity duration-500" />
                 </div>
 
-                {/* Pill Status Badge (Inspired by User Screenshot) */}
+                {/* Pill Badge at Bottom-Right (With Green Indicator & 2-Line Title Matching 3rd Image) */}
                 <motion.div 
-                  className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 rounded-full border border-white/20 bg-ink/95 px-6 py-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md hover:border-champagne/50 transition-all duration-300"
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  className="absolute bottom-1 -right-3 sm:-right-7 md:-right-9 z-20 flex items-center gap-3 rounded-full border-2 border-white/80 bg-[#1c1c1f]/95 px-4 sm:px-6 py-2 sm:py-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.85)] backdrop-blur-md transition-all duration-300 hover:border-champagne hover:scale-105"
+                  initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
                 >
-                  <span className="relative flex h-2.5 w-2.5">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]"></span>
                   </span>
-                  <span className="text-xs font-bold text-white tracking-wide uppercase font-sans">
-                    {editor.role || "Founder &  Photo Editor"}
-                  </span>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <span className="text-[11px] sm:text-xs font-bold text-white tracking-[0.08em] sm:tracking-[0.1em] uppercase leading-tight font-sans whitespace-nowrap">
+                      FOUNDER &amp; WEDDING
+                    </span>
+                    <span className="text-[11px] sm:text-xs font-bold text-white tracking-[0.08em] sm:tracking-[0.1em] uppercase leading-tight font-sans mt-0.5 whitespace-nowrap">
+                      PHOTO EDITOR
+                    </span>
+                  </div>
                 </motion.div>
               </div>
             </Reveal>
@@ -383,26 +356,15 @@ export default function About() {
                 Meet the Editor
               </span>
               <h2 className="font-display text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-                {editor.name || editor.title || "Riwaz Studio"}
+                {editorName}
               </h2>
 
               <div className="mt-6 space-y-5 text-base sm:text-lg leading-8 text-white/75 font-light">
-                {bioParagraphs.length > 0 ? (
-                  bioParagraphs.map((para, idx) => (
-                    <p key={idx} className="leading-8">
-                      {para}
-                    </p>
-                  ))
-                ) : (
-                  <>
-                    <p>
-                      I'm Tejas, the founder and photo editor behind Riwaz Studio. With a passion for photography, creativity, and visual storytelling, I focus on turning raw captures into refined and meaningful visuals. My work includes wedding photo editing, cinematic color grading, natural retouching, portrait enhancement, and creative social media designs.
-                    </p>
-                    <p>
-                      At Riwaz Studio, every photograph is carefully crafted with attention to detail, balanced colors, and a natural premium finish. I believe great editing should enhance the beauty already present in an image while keeping its emotion, character, and story intact.
-                    </p>
-                  </>
-                )}
+                {bioParagraphs.map((para, idx) => (
+                  <p key={idx} className="leading-8">
+                    {para}
+                  </p>
+                ))}
               </div>
 
               {/* Personal Statement Callout Box */}
@@ -540,8 +502,8 @@ export default function About() {
                 className="glass rounded-[14px] p-8 glass-3d timeline-card-3d premium-glow shimmer-border h-full flex flex-col justify-between"
               >
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-champagne/70">Editing Process</span>
-                  <h3 className="font-display text-3xl font-bold text-white mt-1">Our Editing Workflow</h3>
+                  <span className="text-xs font-bold uppercase tracking-widest text-champagne/70">Production Stages</span>
+                  <h3 className="font-display text-3xl font-bold text-white mt-1">Interactive Timeline</h3>
                 </div>
                 <div className="mt-8 grid gap-4">
                   {timeline.map((item, index) => (
@@ -553,7 +515,7 @@ export default function About() {
                         {index + 1}
                       </span>
                       <div className="step-line h-px flex-1 bg-white/15" />
-                      <strong className="step-label text-right text-sm sm:text-base font-semibold text-white/85 group-hover:text-champagne transition-colors">
+                      <strong className="step-label w-48 text-right text-sm sm:text-base font-semibold text-white/85 group-hover:text-champagne transition-colors">
                         {item}
                       </strong>
                     </motion.div>
@@ -573,8 +535,8 @@ export default function About() {
             <h2 className="headline mt-3 text-3xl sm:text-4xl lg:text-5xl text-white font-extrabold">
               Why Riwaz Studio
             </h2>
-            <p className="mt-4 text-white/70 text-base sm:text-lg leading-relaxed font-light">
-              Professional editing, attention to detail, and a natural creative approach come together to deliver polished visuals that photographers can confidently share with their clients.
+            <p className="mt-4 text-white/65 text-base sm:text-lg">
+              Uncompromising visual integrity combined with modern collaboration makes us the premiere destination for selective professionals.
             </p>
           </Reveal>
 
@@ -650,7 +612,7 @@ export default function About() {
                 {editor.ctaHeading || "Have a Photo That Deserves More?"}
               </h2>
               <p className="mt-5 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto font-light leading-8">
-                {editor.ctaText || "Let’s turn your photographs into polished visuals you’ll be proud to share."}
+                {editor.ctaText || "Let’s transform your photographs into visuals you’ll love to share and remember."}
               </p>
               
               <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
