@@ -254,10 +254,10 @@ export default function About() {
       <section className="section pt-36 section-3d">
         <div className="container depth-layer">
           <Reveal>
-            <motion.p className="eyebrow" initial={{ opacity: 0, y: 14, filter: 'blur(10px)' }} whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }} viewport={{ once: true }} transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
+            <motion.p className="eyebrow" initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}>
               About Riwaz Studio
             </motion.p>
-            <motion.h1 className="headline mt-4 max-w-5xl headline-3d-glow text-white font-extrabold" initial={{ opacity: 0, y: 30, rotateX: 12, filter: 'blur(8px)' }} whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }} viewport={{ once: true }} transition={{ delay: 0.15, duration: 1.1, ease: [0.25, 0.46, 0.45, 0.94] }}>
+            <motion.h1 className="headline mt-4 max-w-5xl headline-3d-glow text-white font-extrabold" initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
               Turning Your Photographs Into Timeless Visuals.
             </motion.h1>
             <motion.p className="mt-6 text-lg sm:text-xl leading-8 text-white/75 max-w-3xl font-light" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3, duration: 0.9 }}>
@@ -297,8 +297,8 @@ export default function About() {
 
       {/* 2. ABOUT THE EDITOR SECTION */}
       <section className="section py-24 bg-gradient-to-b from-transparent via-white/[.015] to-transparent relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
-        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-champagne/10 rounded-full blur-[140px] pointer-events-none" />
+        <div className="hidden md:block absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
+        <div className="hidden md:block absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-champagne/10 rounded-full blur-[140px] pointer-events-none" />
 
         <div className="container relative z-10">
           <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.3fr] xl:gap-20">

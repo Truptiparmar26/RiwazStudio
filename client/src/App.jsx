@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import Lenis from 'lenis';
 import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -21,12 +21,6 @@ import Services from './pages/Services.jsx';
 import TermsAndConditions from './pages/TermsAndConditions.jsx';
 import Testimonials from './pages/Testimonials.jsx';
 
-function ScrollProgress() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
-  return <motion.div className="fixed left-0 top-0 z-[80] h-1 origin-left bg-champagne" style={{ scaleX }} />;
-}
-
 export default function App() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -42,6 +36,12 @@ export default function App() {
   }, [location.pathname]);
 
   useEffect(() => {
+    // Disable Lenis smooth scrolling on mobile / touch devices to prevent scroll stuttering
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+    if (isTouch || window.innerWidth < 1024) {
+      return;
+    }
+
     const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
     let frame;
     const raf = (time) => {
@@ -58,7 +58,6 @@ export default function App() {
   return (
     <>
       {showLayout && <Preloader />}
-      {showLayout && <ScrollProgress />}
       {showLayout && <CursorGlow />}
       {showLayout && <Navbar />}
       {isAdminRoute ? (
@@ -69,10 +68,10 @@ export default function App() {
         <AnimatePresence mode="wait">
           <motion.main
             key={location.pathname}
-            initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -16, filter: 'blur(10px)' }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
           >
             <Routes location={location}>
               <Route path="/" element={<Home />} />

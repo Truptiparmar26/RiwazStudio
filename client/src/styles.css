@@ -333,10 +333,41 @@ body.light .subhead {
 }
 
 @media (max-width: 767px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   html, body {
     overflow-x: hidden !important;
     width: 100% !important;
     max-width: 100% !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  /* Optimize glass & blur effects for mobile GPU rendering */
+  .glass {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    background: rgba(16, 17, 22, 0.88) !important;
+  }
+
+  [class*="backdrop-blur-"] {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Disable expensive continuous animations that run off-screen */
+  .shimmer-border::after {
+    display: none !important;
+  }
+
+  .floating {
+    animation: none !important;
+  }
+
+  .pulse-glow {
+    animation: none !important;
   }
 
   .section,
