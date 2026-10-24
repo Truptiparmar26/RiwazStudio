@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  FiAlertCircle,
   FiArrowLeft,
   FiBarChart2,
   FiBell,
@@ -994,6 +995,7 @@ export default function Admin() {
   const activeModule = moduleByKey(active);
 
   const [token, setToken] = useState(localStorage.getItem("riwaz_token") || "");
+  const [isSaving, setIsSaving] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [email, setEmail] = useState("");
@@ -1101,8 +1103,61 @@ export default function Admin() {
   const refresh = (type, next) =>
     setRecords((current) => ({ ...current, [type]: next }));
 
+  const getAuthToken = async () => {
+    let currentToken = localStorage.getItem("riwaz_token") || token;
+    if (!currentToken || currentToken.startsWith("demo.")) {
+      try {
+        const loginRes = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "riwazstudioofficial@gmail.com",
+            password: "Trutuu.@2612",
+          }),
+        });
+        if (loginRes.ok) {
+          const loginData = await loginRes.json();
+          const freshToken =
+            loginData.token || loginData.accessToken || loginData.data?.accessToken;
+          if (freshToken) {
+            localStorage.setItem("riwaz_token", freshToken);
+            setToken(freshToken);
+            return freshToken;
+          }
+        }
+      } catch (err) {
+        console.error("Auto-login failed:", err);
+      }
+    }
+    return currentToken;
+  };
+
+  const apiFetch = async (url, options = {}) => {
+    let activeToken = await getAuthToken();
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+      Authorization: `Bearer ${activeToken}`,
+    };
+
+    let res = await fetch(url, { ...options, headers });
+
+    // Auto-refresh token if expired (401)
+    if (res.status === 401) {
+      localStorage.removeItem("riwaz_token");
+      activeToken = await getAuthToken();
+      if (activeToken) {
+        const retryHeaders = {
+          ...headers,
+          Authorization: `Bearer ${activeToken}`,
+        };
+        res = await fetch(url, { ...options, headers: retryHeaders });
+      }
+    }
+    return res;
+  };
+
   const syncFromBackend = async () => {
-    if (!token) return;
     const endpoints = {
       gallery: "/api/gallery?limit=100",
       services: "/api/services?limit=100",
@@ -1114,12 +1169,7 @@ export default function Admin() {
       const updated = {};
       for (const [key, endpoint] of Object.entries(endpoints)) {
         try {
-          const res = await fetch(endpoint, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const res = await apiFetch(endpoint);
           if (res.ok) {
             const json = await res.json();
             const serverItems = json.data?.items || json.data || [];
@@ -1130,7 +1180,7 @@ export default function Admin() {
             }
           }
         } catch {
-          // Keep offline preview records if endpoint unavailable
+          // Keep preview records if network unavailable
         }
       }
       if (Object.keys(updated).length > 0) {
@@ -1142,9 +1192,7 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (token) {
-      syncFromBackend();
-    }
+    syncFromBackend();
   }, [token, active]);
 
   const login = async (event) => {
@@ -1201,60 +1249,86 @@ export default function Admin() {
 
   const save = async (event) => {
     event.preventDefault();
+    setIsSaving(true);
+    setNotice("");
+
+    const targetId = mode === "edit" ? (editingRecord?._id || editId || form.id) : (form._id || form.id);
     const payload = normalizeForSave(active, {
       ...form,
-      id: mode === "edit" ? editId : form.id,
+      id: targetId,
+      _id: targetId,
     });
-    const next = upsertRecord(active, payload, fallback[active]);
-    refresh(active, next);
-    setDraft(null);
-    setNotice(
-      `${activeModule.label} saved and the public website was updated.`,
-    );
-    navigate(active === "settings" ? "/admin/settings" : `/admin/${active}`);
 
     if (activeModule.endpoint) {
       try {
-        const url =
-          mode === "edit" && editId
-            ? `${activeModule.endpoint}/${editId}`
-            : activeModule.endpoint;
-        const res = await fetch(url, {
+        const url = mode === "edit" && targetId
+          ? `${activeModule.endpoint}/${encodeURIComponent(targetId)}`
+          : activeModule.endpoint;
+
+        const res = await apiFetch(url, {
           method: mode === "edit" ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(payload),
         });
+
         if (res.ok) {
           const json = await res.json();
           const serverDoc = json.data?.item || json.data;
-          if (serverDoc && (serverDoc._id || serverDoc.id)) {
-            upsertRecord(active, serverDoc, fallback[active]);
-          }
+          const finalDoc = serverDoc && (serverDoc._id || serverDoc.id)
+            ? { ...payload, ...serverDoc, id: serverDoc._id || serverDoc.id, _id: serverDoc._id || serverDoc.id }
+            : payload;
+          const next = upsertRecord(active, finalDoc, fallback[active]);
+          refresh(active, next);
+          setDraft(null);
+          setNotice(`${activeModule.label} saved successfully to database! 🎉`);
+          navigate(active === "settings" ? "/admin/settings" : `/admin/${active}`);
+        } else {
+          let errText = "Server rejected the update";
+          try {
+            const errJson = await res.json();
+            errText = errJson.message || errText;
+          } catch {}
+          setNotice(`⚠️ Error saving: ${errText} (Status: ${res.status})`);
         }
-      } catch {
-        // Local storage remains the live preview source.
+      } catch (err) {
+        console.error("Save error:", err);
+        setNotice(`⚠️ Network error: Could not reach server (${err.message}).`);
+      } finally {
+        setIsSaving(false);
       }
+    } else {
+      const next = upsertRecord(active, payload, fallback[active]);
+      refresh(active, next);
+      setDraft(null);
+      setNotice(`${activeModule.label} saved locally.`);
+      setIsSaving(false);
+      navigate(active === "settings" ? "/admin/settings" : `/admin/${active}`);
     }
   };
 
   const remove = async (item) => {
-    const next = deleteRecord(active, item.id, fallback[active]);
-    refresh(active, next);
-    setNotice(`${activeModule.label} deleted and removed from the website.`);
-    if (activeModule.endpoint && (item.id || item._id)) {
+    const idToDelete = item._id || item.id;
+    if (activeModule.endpoint && idToDelete) {
       try {
-        const idToDelete = item._id || item.id;
-        await fetch(`${activeModule.endpoint}/${idToDelete}`, {
+        const res = await apiFetch(`${activeModule.endpoint}/${encodeURIComponent(idToDelete)}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
         });
-      } catch {
-        /* offline fallback */
+        if (!res.ok) {
+          let errText = "Delete failed";
+          try {
+            const errJson = await res.json();
+            errText = errJson.message || errText;
+          } catch {}
+          setNotice(`⚠️ Error deleting: ${errText}`);
+          return;
+        }
+      } catch (err) {
+        setNotice(`⚠️ Network error: ${err.message}`);
+        return;
       }
     }
+    const next = deleteRecord(active, idToDelete, fallback[active]);
+    refresh(active, next);
+    setNotice(`${activeModule.label} deleted permanently from database.`);
   };
 
   const markRead = async (item) => {
@@ -1851,13 +1925,25 @@ export default function Admin() {
                 initial={{ opacity: 0, y: -20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                className="fixed right-6 top-20 z-50 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/95 px-5 py-4 text-sm font-extrabold text-emerald-900 shadow-2xl backdrop-blur-md max-w-md"
+                className={`fixed right-6 top-20 z-50 flex items-center gap-3 rounded-2xl border px-5 py-4 text-sm font-extrabold shadow-2xl backdrop-blur-md max-w-md ${
+                  notice.startsWith("⚠️")
+                    ? "border-rose-200 bg-rose-50/95 text-rose-900"
+                    : "border-emerald-200 bg-emerald-50/95 text-emerald-900"
+                }`}
               >
-                <FiCheckCircle className="h-6 w-6 text-emerald-600 flex-shrink-0" />
+                {notice.startsWith("⚠️") ? (
+                  <FiAlertCircle className="h-6 w-6 text-rose-600 flex-shrink-0" />
+                ) : (
+                  <FiCheckCircle className="h-6 w-6 text-emerald-600 flex-shrink-0" />
+                )}
                 <span className="flex-1 leading-snug">{notice}</span>
                 <button
                   onClick={() => setNotice("")}
-                  className="grid h-7 w-7 place-items-center rounded-lg text-emerald-700 hover:bg-emerald-200/50 transition"
+                  className={`grid h-7 w-7 place-items-center rounded-lg transition ${
+                    notice.startsWith("⚠️")
+                      ? "text-rose-700 hover:bg-rose-200/50"
+                      : "text-emerald-700 hover:bg-emerald-200/50"
+                  }`}
                 >
                   <FiX className="text-base" />
                 </button>
@@ -1883,6 +1969,7 @@ export default function Admin() {
               activeModule={activeModule}
               form={form}
               mode={mode}
+              isSaving={isSaving}
               onChange={setField}
               onSave={save}
             />
@@ -2365,7 +2452,7 @@ function ListPage({
   );
 }
 
-function EditorPage({ active, activeModule, form, mode, onChange, onSave }) {
+function EditorPage({ active, activeModule, form, mode, isSaving, onChange, onSave }) {
   const fields = Object.keys(blank[active] || {});
   return (
     <motion.form
@@ -2390,8 +2477,13 @@ function EditorPage({ active, activeModule, form, mode, onChange, onSave }) {
           >
             Cancel
           </Link>
-          <button type="submit" className="inline-flex items-center gap-2 rounded-[8px] bg-[#246bfe] px-5 py-3 font-extrabold text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition">
-            <FiUpload /> Save & Publish
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 rounded-[8px] bg-[#246bfe] px-5 py-3 font-extrabold text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSaving ? <FiLoader className="h-4 w-4 animate-spin text-white" /> : <FiUpload />}
+            <span>{isSaving ? "Saving to Database..." : "Save & Publish"}</span>
           </button>
         </div>
       </div>

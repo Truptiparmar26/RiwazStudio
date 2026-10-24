@@ -74,7 +74,7 @@ function sortRecords(items, type) {
 export function normalizeRecords(records, type) {
   if (!Array.isArray(records)) return [];
   return records.map((item, index) => {
-    const id = item.id || item._id || `${type}-${index + 1}`;
+    const id = item._id || item.id || `${type}-${index + 1}`;
     const updatedAt = getIndianTime(item.updatedAt || item.createdAt, id);
     const rawImg = item.image || item.bannerImage || item.featuredImage || item.profileImage || item.url || '';
     const imgStr = typeof rawImg === 'object' && rawImg !== null ? (rawImg.url || rawImg.src || '') : (rawImg || '');
@@ -224,7 +224,7 @@ export function saveCollection(type, records) {
 
 export function upsertRecord(type, record, fallback = []) {
   const records = loadCollection(type, fallback);
-  const nextId = record.id || record._id || `${type}-${Date.now()}`;
+  const nextId = record._id || record.id || `${type}-${Date.now()}`;
   const nextRecord = {
     ...record,
     id: nextId,
@@ -233,20 +233,24 @@ export function upsertRecord(type, record, fallback = []) {
   };
   unmarkDeleted(type, nextId);
   if (record._id) unmarkDeleted(type, record._id);
+  if (record.id) unmarkDeleted(type, record.id);
 
-  // Match existing record by ID (string or number equality) or _id
+  // Match existing record by ID or _id or title (if matching fallback)
+  const targetTitle = (record.title || record.name || '').trim().toLowerCase();
   const exists = records.some(
     (item) =>
       String(item.id) === String(nextId) ||
       String(item._id) === String(nextId) ||
-      (record._id && (String(item.id) === String(record._id) || String(item._id) === String(record._id)))
+      (record._id && (String(item.id) === String(record._id) || String(item._id) === String(record._id))) ||
+      (targetTitle && (item.title || item.name || '').trim().toLowerCase() === targetTitle)
   );
 
   const next = exists
     ? records.map((item) =>
         String(item.id) === String(nextId) ||
         String(item._id) === String(nextId) ||
-        (record._id && (String(item.id) === String(record._id) || String(item._id) === String(record._id)))
+        (record._id && (String(item.id) === String(record._id) || String(item._id) === String(record._id))) ||
+        (targetTitle && (item.title || item.name || '').trim().toLowerCase() === targetTitle)
           ? { ...item, ...nextRecord }
           : item
       )
@@ -259,7 +263,8 @@ export function upsertRecord(type, record, fallback = []) {
 
 export function deleteRecord(type, id, fallback = []) {
   markDeleted(type, id);
-  const next = loadCollection(type, fallback).filter(
+  const records = loadCollection(type, fallback);
+  const next = records.filter(
     (item) => String(item.id) !== String(id) && String(item._id) !== String(id)
   );
   saveCollection(type, next);
