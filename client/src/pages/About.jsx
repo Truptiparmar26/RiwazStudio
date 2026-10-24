@@ -3,7 +3,7 @@ import Reveal from '../components/Reveal.jsx';
 import PreloadedImage from '../components/PreloadedImage.jsx';
 import { stats } from '../data/content.js';
 import { useApiCollection } from '../utils/siteStore.js';
-import defaultEditorImg from '../assets/editor-portrait.jpg';
+import defaultEditorImg from '../assets/editor-portrait.webp';
 import {
   FiSliders,
   FiEye,
@@ -124,36 +124,38 @@ export default function About() {
   return (
     <>
       <style>{`
-        .section-3d { perspective: 1400px; transform-style: preserve-3d; }
-        .depth-layer { transform-style: preserve-3d; }
+        @media (min-width: 768px) {
+          .section-3d { perspective: 1400px; transform-style: preserve-3d; }
+          .depth-layer { transform-style: preserve-3d; }
 
-        .glass-3d {
-          transform: translateZ(0);
-          box-shadow:
-            0 8px 32px rgba(0,0,0,0.3),
-            0 2px 8px rgba(0,0,0,0.2),
-            inset 0 1px 0 rgba(255,255,255,0.08);
-          backface-visibility: hidden;
-          transition: transform 0.7s cubic-bezier(0.23,1,0.32,1),
-                      box-shadow 0.7s cubic-bezier(0.23,1,0.32,1);
-        }
-        .glass-3d:hover {
-          transform: translateZ(20px) translateY(-5px);
-          box-shadow:
-            0 24px 64px rgba(0,0,0,0.45),
-            0 4px 16px rgba(0,0,0,0.3),
-            inset 0 1px 0 rgba(255,255,255,0.12),
-            0 0 50px rgba(199,168,80,0.08);
-        }
+          .glass-3d {
+            transform: translateZ(0);
+            box-shadow:
+              0 8px 32px rgba(0,0,0,0.3),
+              0 2px 8px rgba(0,0,0,0.2),
+              inset 0 1px 0 rgba(255,255,255,0.08);
+            backface-visibility: hidden;
+            transition: transform 0.7s cubic-bezier(0.23,1,0.32,1),
+                        box-shadow 0.7s cubic-bezier(0.23,1,0.32,1);
+          }
+          .glass-3d:hover {
+            transform: translateZ(20px) translateY(-5px);
+            box-shadow:
+              0 24px 64px rgba(0,0,0,0.45),
+              0 4px 16px rgba(0,0,0,0.3),
+              inset 0 1px 0 rgba(255,255,255,0.12),
+              0 0 50px rgba(199,168,80,0.08);
+          }
 
-        .stat-3d {
-          transform-style: preserve-3d;
-          transition: transform 0.6s cubic-bezier(0.23,1,0.32,1),
-                      box-shadow 0.6s cubic-bezier(0.23,1,0.32,1);
-        }
-        .stat-3d:hover {
-          transform: perspective(600px) translateZ(30px) rotateY(5deg) rotateX(-4deg);
-          box-shadow: 0 20px 50px rgba(0,0,0,0.35), 0 0 40px rgba(199,168,80,0.08);
+          .stat-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23,1,0.32,1),
+                        box-shadow 0.6s cubic-bezier(0.23,1,0.32,1);
+          }
+          .stat-3d:hover {
+            transform: perspective(600px) translateZ(30px) rotateY(5deg) rotateX(-4deg);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35), 0 0 40px rgba(199,168,80,0.08);
+          }
         }
 
         .premium-glow { position: relative; }
@@ -316,19 +318,22 @@ export default function About() {
 
               <div className="relative group p-2 sm:p-4">
                 {/* Circular Portrait Frame with Crisp White Border */}
-                <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden border-2 border-white/80 bg-ink shadow-[0_20px_50px_rgba(0,0,0,0.85)] transition-all duration-500 group-hover:border-white">
+                <div className="relative w-56 h-56 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden border-2 border-white/80 bg-ink shadow-[0_20px_50px_rgba(0,0,0,0.85)] transition-all duration-500 group-hover:border-white">
                   <PreloadedImage
                     src={editor.image && !editor.image.includes('photo-1534528741775-53994a69daeb') ? editor.image : defaultEditorImg}
                     alt={editor.name || "Founder & Wedding Photo Editor"}
+                    priority={true}
+                    widths={[200, 400, 681]}
+                    sizes="(max-width: 640px) 224px, (max-width: 1024px) 320px, 384px"
                     containerClassName="w-full h-full"
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 filter contrast-[1.03]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-40 group-hover:opacity-20 transition-opacity duration-500" />
                 </div>
 
-                {/* Pill Badge at Bottom-Right (With Green Indicator & 2-Line Title Matching 3rd Image) */}
+                {/* Pill Badge at Bottom-Right (Centered on mobile, offset on desktop) */}
                 <motion.div 
-                  className="absolute bottom-1 -right-3 sm:-right-7 md:-right-9 z-20 flex items-center gap-3 rounded-full border-2 border-white/80 bg-[#1c1c1f]/95 px-4 sm:px-6 py-2 sm:py-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.85)] backdrop-blur-md transition-all duration-300 hover:border-champagne hover:scale-105"
+                  className="absolute -bottom-3 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:bottom-1 sm:-right-7 md:-right-9 z-20 flex items-center gap-2.5 sm:gap-3 rounded-full border-2 border-white/80 bg-[#1c1c1f]/95 px-3.5 sm:px-6 py-1.5 sm:py-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.85)] backdrop-blur-md transition-all duration-300 hover:border-champagne hover:scale-105"
                   initial={{ opacity: 0, scale: 0.9, y: 15 }}
                   whileInView={{ opacity: 1, scale: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -339,10 +344,10 @@ export default function About() {
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]"></span>
                   </span>
                   <div className="flex flex-col items-center justify-center text-center">
-                    <span className="text-[11px] sm:text-xs font-bold text-white tracking-[0.08em] sm:tracking-[0.1em] uppercase leading-tight font-sans whitespace-nowrap">
+                    <span className="text-[10px] sm:text-xs font-bold text-white tracking-[0.08em] sm:tracking-[0.1em] uppercase leading-tight font-sans whitespace-nowrap">
                       FOUNDER &amp; WEDDING
                     </span>
-                    <span className="text-[11px] sm:text-xs font-bold text-white tracking-[0.08em] sm:tracking-[0.1em] uppercase leading-tight font-sans mt-0.5 whitespace-nowrap">
+                    <span className="text-[10px] sm:text-xs font-bold text-white tracking-[0.08em] sm:tracking-[0.1em] uppercase leading-tight font-sans mt-0.5 whitespace-nowrap">
                       PHOTO EDITOR
                     </span>
                   </div>

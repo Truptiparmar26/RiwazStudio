@@ -23,17 +23,6 @@ export default function Gallery() {
     return items;
   }, [category, search, galleryItems]);
 
-  // Active Background Preloading Effect for seamless gallery switching & lightbox views
-  useEffect(() => {
-    filtered.forEach((item) => {
-      const imageUrl = item.image || item.url;
-      if (imageUrl) {
-        const img = new Image();
-        img.src = imageUrl;
-      }
-    });
-  }, [filtered]);
-
   return (
     <>
       {/* Ambient background glows */}
@@ -50,8 +39,8 @@ export default function Gallery() {
                   <p className="eyebrow">Visual Archive & Portfolio</p>
                 </div>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-champagne/40 bg-champagne/10 px-3 py-0.5 text-[0.68rem] font-bold text-champagne uppercase tracking-wider shadow-[0_0_15px_rgba(244,214,144,0.15)]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-champagne animate-ping" />
-                  HD Preloading Active
+                  <span className="h-1.5 w-1.5 rounded-full bg-champagne" />
+                  Curated HD Portfolio
                 </span>
               </div>
               <h1 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white headline-3d-glow leading-[1.12]">
@@ -143,8 +132,11 @@ export default function Gallery() {
                     <PreloadedImage
                       src={item.image || item.url}
                       alt={item.title}
-                      priority={index < 6}
-                      containerClassName="min-h-[260px] w-full"
+                      priority={index < 4}
+                      widths={[360, 540, 750]}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                      quality={75}
+                      containerClassName="min-h-[220px] sm:min-h-[260px] w-full"
                       className="image-protect h-auto w-full object-cover transition duration-700 ease-out group-hover:scale-110 group-hover:rotate-1 filter brightness-95 group-hover:brightness-105"
                       onContextMenu={(event) => event.preventDefault()}
                     />
@@ -211,6 +203,9 @@ export default function Gallery() {
                   src={selected.image || selected.url}
                   alt={selected.title}
                   priority={true}
+                  widths={[600, 900, 1200]}
+                  sizes="(max-width: 1024px) 95vw, 1000px"
+                  quality={80}
                   containerClassName="flex items-center justify-center h-full w-full max-h-[68vh] min-h-[180px]"
                   className="max-h-full w-auto max-w-full rounded-[10px] object-contain shadow-2xl mx-auto"
                   onContextMenu={(event) => event.preventDefault()}

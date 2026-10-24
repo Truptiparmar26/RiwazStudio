@@ -9,7 +9,8 @@ const apiEndpoints = {
   blogs: '/api/blogs',
   testimonials: '/api/testimonials',
   messages: '/api/contact',
-  settings: '/api/settings'
+  settings: '/api/settings',
+  beforeAfter: '/api/before-after'
 };
 
 export function getIndianTime(val, fallbackId) {
@@ -147,218 +148,66 @@ export function mergeWithLocal(type, serverRecords, fallback = []) {
   const deletedIds = getDeletedIds(type);
 
   const map = new Map();
-  const existingNames = new Set();
 
-  // 1. First load local records so Admin's newly added items take top priority
-  localNormalized.forEach((item) => {
-    const id = String(item.id || item._id);
-    const nameKey = (item.title || item.name || item.clientName || '').trim().toLowerCase();
-    if (type === 'services' && nameKey === 'baby shoot editing') return;
-    if (!deletedIds.includes(id) && !deletedIds.includes(String(item._id))) {
-      map.set(id, item);
-      if (nameKey) existingNames.add(nameKey);
-    }
-  });
-
-  // 2. Append server records if not already present by ID or exact title/name duplicate
+  // 1. First index server records (authoritative database data)
   serverNormalized.forEach((item) => {
     const id = String(item.id || item._id);
-    const nameKey = (item.title || item.name || item.clientName || '').trim().toLowerCase();
-    if (type === 'services' && nameKey === 'baby shoot editing') return;
-    if (!map.has(id) && !deletedIds.includes(id) && !deletedIds.includes(String(item._id))) {
-      if (!nameKey || !existingNames.has(nameKey)) {
-        map.set(id, item);
-        if (nameKey) existingNames.add(nameKey);
-      }
+    if (!deletedIds.includes(id) && !deletedIds.includes(String(item._id))) {
+      map.set(id, item);
     }
   });
 
-  // 3. Append fallback records so all services always show even if server/local cache is incomplete
-  if (Array.isArray(fallback) && fallback.length > 0) {
-    const fallbackNormalized = normalizeRecords(fallback, type);
-    fallbackNormalized.forEach((item) => {
-      const id = String(item.id || item._id);
-      const nameKey = (item.title || item.name || item.clientName || '').trim().toLowerCase();
-      if (type === 'services' && nameKey === 'baby shoot editing') return;
-      if (!map.has(id) && !deletedIds.includes(id) && !deletedIds.includes(String(item._id))) {
-        if (!nameKey || !existingNames.has(nameKey)) {
-          map.set(id, item);
-          if (nameKey) existingNames.add(nameKey);
-        }
+  // 2. Only append local items that do not exist on the server (e.g. newly created offline records)
+  localNormalized.forEach((localItem) => {
+    const localId = String(localItem.id || localItem._id);
+    if (deletedIds.includes(localId) || deletedIds.includes(String(localItem._id))) return;
+
+    let existsOnServer = false;
+    const localName = (localItem.title || localItem.name || localItem.clientName || '').trim().toLowerCase();
+
+    for (const [sKey, sItem] of map.entries()) {
+      const serverId = String(sItem.id || sItem._id);
+      const serverName = (sItem.title || sItem.name || sItem.clientName || '').trim().toLowerCase();
+      if (sKey === localId || serverId === localId || (localName && serverName && localName === serverName)) {
+        existsOnServer = true;
+        break;
       }
-    });
-  }
+    }
 
-  if (type === 'gallery') {
-    const categoryMap = {
-      'weddings': 'Wedding',
-      'pre wedding': 'Pre-Wedding',
-      'pre-wedding': 'Pre-Wedding',
-      'portraits': 'Portrait',
-      'fashion': 'Retouching',
-      'retouch': 'Retouching',
-      'skin retouch': 'Retouching',
-      'color correction': 'Color Grading',
-      'color grading': 'Color Grading',
-      'creative': 'Creative Edits',
-      'commercial': 'Creative Edits',
-      'nature': 'Creative Edits',
-      'travel': 'Creative Edits',
-      'events': 'Creative Edits',
-      'product': 'Creative Edits',
-      'baby': 'Portrait',
-      'kids': 'Portrait',
-      'social': 'Instagram Posts',
-      'instagram': 'Instagram Posts',
-      'instagram post design': 'Instagram Posts',
-      'instagram posts': 'Instagram Posts'
-    };
-    const items = Array.from(map.values()).map((item) => {
-      const rawCat = (item.category || '').trim().toLowerCase();
-      const mapped = categoryMap[rawCat];
-      return mapped ? { ...item, category: mapped } : item;
-    });
-    return sortRecords(items, type);
-  }
+    if (!existsOnServer) {
+      map.set(localId, localItem);
+    }
+  });
 
-  return sortRecords(Array.from(map.values()), type);
+  const merged = sortRecords(Array.from(map.values()), type);
+  return merged;
 }
 
 export function loadCollection(type, fallback = []) {
   try {
     const saved = localStorage.getItem(`${prefix}${type}`);
-    let raw = saved ? JSON.parse(saved) : fallback;
-    if (!Array.isArray(raw) || (raw.length === 0 && fallback.length > 0 && type !== 'messages')) {
-      raw = fallback;
-      localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
-    } else if (Array.isArray(fallback) && fallback.length > 0) {
-      if (type === 'services') {
-        // Strip out old deprecated Baby Shoot Editing completely so it never duplicates Kids Photo Editing
-        raw = raw.filter((item) => {
-          const key = (item.title || item.name || '').trim().toLowerCase();
-          return key !== 'baby shoot editing';
-        });
-        const rawMap = new Map();
-        raw.forEach((item) => {
-          const key = (item.title || item.name || '').trim().toLowerCase();
-          if (key) rawMap.set(key, item);
-        });
-        fallback.forEach((fb, idx) => {
-          const key = (fb.title || fb.name || '').trim().toLowerCase();
-          const existing = rawMap.get(key);
-          if (existing) {
-            existing.order = fb.order ?? (idx + 1);
-            existing.description = fb.description;
-            existing.features = fb.features;
-            existing.category = fb.category;
-            // Always ensure the matched professional photo is assigned
-            if (fb.image) existing.image = fb.image;
-          } else if (key) {
-            raw.push({ ...fb, order: fb.order ?? (idx + 1) });
-          }
-        });
-        raw.sort((a, b) => {
-          const titleA = (a.title || '').trim().toLowerCase();
-          const titleB = (b.title || '').trim().toLowerCase();
-          return (serviceCanonicalOrder[titleA] ?? 999) - (serviceCanonicalOrder[titleB] ?? 999);
-        });
-        localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
-      } else if (type === 'gallery') {
-        const categoryMap = {
-          'weddings': 'Wedding',
-          'pre wedding': 'Pre-Wedding',
-          'pre-wedding': 'Pre-Wedding',
-          'portraits': 'Portrait',
-          'fashion': 'Retouching',
-          'retouch': 'Retouching',
-          'skin retouch': 'Retouching',
-          'color correction': 'Color Grading',
-          'color grading': 'Color Grading',
-          'creative': 'Creative Edits',
-          'commercial': 'Creative Edits',
-          'nature': 'Creative Edits',
-          'travel': 'Creative Edits',
-          'events': 'Creative Edits',
-          'product': 'Creative Edits',
-          'baby': 'Portrait',
-          'kids': 'Portrait',
-          'social': 'Instagram Posts',
-          'instagram': 'Instagram Posts',
-          'instagram post design': 'Instagram Posts',
-          'instagram posts': 'Instagram Posts'
-        };
-        let updated = false;
-        raw = raw.map((item) => {
-          const rawCat = (item.category || '').trim().toLowerCase();
-          const mapped = categoryMap[rawCat];
-          if (mapped && mapped !== item.category) {
-            updated = true;
-            return { ...item, category: mapped };
-          }
-          return item;
-        });
-        const rawTitles = new Set(
-          raw.map((item) => (item.title || item.name || '').trim().toLowerCase()).filter(Boolean)
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const deletedIds = getDeletedIds(type);
+        const filtered = parsed.filter(
+          (item) => !deletedIds.includes(String(item.id)) && !deletedIds.includes(String(item._id))
         );
-        fallback.forEach((item) => {
-          const titleKey = (item.title || item.name || '').trim().toLowerCase();
-          if (titleKey && !rawTitles.has(titleKey)) {
-            raw.push(item);
-            rawTitles.add(titleKey);
-            updated = true;
-          }
-        });
-        if (updated) {
-          localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
-        }
-      } else if (type === 'about') {
-        let updated = false;
-        raw = raw.map((item) => {
-          let modified = false;
-          let newItem = { ...item };
-          if (newItem.image && newItem.image.includes('photo-1534528741775-53994a69daeb')) {
-            newItem.image = fallback[0]?.image || '/editor-portrait.jpg';
-            modified = true;
-          }
-          if (newItem.name === 'Riwaz Studio' || !newItem.name) {
-            newItem.name = 'Tejas Patel';
-            newItem.title = 'Tejas Patel';
-            modified = true;
-          }
-          if (newItem.bio && newItem.bio.includes('Behind every beautifully edited photograph')) {
-            newItem.bio = fallback[0]?.bio || newItem.bio;
-            modified = true;
-          }
-          if (modified) {
-            updated = true;
-            return newItem;
-          }
-          return item;
-        });
-        if (updated) {
-          localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
-        }
-      } else {
-        const rawNames = new Set(
-          raw.map((item) => (item.title || item.name || item.clientName || '').trim().toLowerCase()).filter(Boolean)
-        );
-        let updated = false;
-        fallback.forEach((item) => {
-          const nameKey = (item.title || item.name || item.clientName || '').trim().toLowerCase();
-          if (nameKey && !rawNames.has(nameKey)) {
-            raw.push(item);
-            rawNames.add(nameKey);
-            updated = true;
-          }
-        });
-        if (updated) {
-          localStorage.setItem(`${prefix}${type}`, JSON.stringify(raw));
-        }
+        return sortRecords(normalizeRecords(filtered, type), type);
       }
     }
-    const normalized = normalizeRecords(raw, type);
+
+    // Initialize from fallback only if no stored data exists yet
+    const normalized = normalizeRecords(fallback, type);
     const deletedIds = getDeletedIds(type);
-    return sortRecords(normalized.filter((item) => !deletedIds.includes(String(item.id)) && !deletedIds.includes(String(item._id))), type);
+    const filtered = normalized.filter(
+      (item) => !deletedIds.includes(String(item.id)) && !deletedIds.includes(String(item._id))
+    );
+    const sorted = sortRecords(filtered, type);
+    if (sorted.length > 0) {
+      localStorage.setItem(`${prefix}${type}`, JSON.stringify(sorted));
+    }
+    return sorted;
   } catch {
     return sortRecords(normalizeRecords(fallback, type), type);
   }
@@ -385,10 +234,24 @@ export function upsertRecord(type, record, fallback = []) {
   unmarkDeleted(type, nextId);
   if (record._id) unmarkDeleted(type, record._id);
 
-  const exists = records.some((item) => item.id === nextRecord.id || item._id === nextRecord.id);
+  // Match existing record by ID (string or number equality) or _id
+  const exists = records.some(
+    (item) =>
+      String(item.id) === String(nextId) ||
+      String(item._id) === String(nextId) ||
+      (record._id && (String(item.id) === String(record._id) || String(item._id) === String(record._id)))
+  );
+
   const next = exists
-    ? records.map((item) => (item.id === nextRecord.id || item._id === nextRecord.id ? nextRecord : item))
+    ? records.map((item) =>
+        String(item.id) === String(nextId) ||
+        String(item._id) === String(nextId) ||
+        (record._id && (String(item.id) === String(record._id) || String(item._id) === String(record._id)))
+          ? { ...item, ...nextRecord }
+          : item
+      )
     : [nextRecord, ...records];
+
   const sorted = sortRecords(next, type);
   saveCollection(type, sorted);
   return sorted;
@@ -396,7 +259,9 @@ export function upsertRecord(type, record, fallback = []) {
 
 export function deleteRecord(type, id, fallback = []) {
   markDeleted(type, id);
-  const next = loadCollection(type, fallback).filter((item) => item.id !== id && item._id !== id);
+  const next = loadCollection(type, fallback).filter(
+    (item) => String(item.id) !== String(id) && String(item._id) !== String(id)
+  );
   saveCollection(type, next);
   return next;
 }

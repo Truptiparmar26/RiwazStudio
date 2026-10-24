@@ -106,11 +106,14 @@ export default function BlogDetail() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="my-10 rounded-[16px] overflow-hidden luxury-border bg-charcoal shadow-2xl">
+          <div className="my-6 sm:my-10 rounded-[16px] overflow-hidden luxury-border bg-charcoal shadow-2xl">
             <PreloadedImage
               src={post.image || post.featuredImage || 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=1200&q=80&fm=webp'}
               alt={post.title}
               priority={true}
+              widths={[400, 750, 1200]}
+              sizes="(max-width: 768px) 100vw, 896px"
+              quality={78}
               containerClassName="max-h-[520px] w-full"
               className="w-full max-h-[520px] object-cover"
             />
@@ -118,7 +121,7 @@ export default function BlogDetail() {
         </Reveal>
 
         <Reveal delay={0.15}>
-          <div className="glass rounded-[12px] p-8 md:p-12 text-white/80 leading-9 text-lg space-y-6">
+          <div className="glass rounded-[12px] p-5 sm:p-8 md:p-12 text-white/80 leading-relaxed sm:leading-9 text-base sm:text-lg space-y-5 sm:space-y-6">
             {post.content ? (
               <div 
                 className="prose prose-invert max-w-none prose-headings:font-display prose-headings:text-white prose-a:text-champagne prose-strong:text-white"

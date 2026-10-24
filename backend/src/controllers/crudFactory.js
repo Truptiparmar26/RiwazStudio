@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import slugify from 'slugify';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
@@ -70,7 +71,22 @@ export function update(Model, label, mapper = (req) => req.body) {
     try {
       const payload = await mapper(req);
       if (payload.title && !payload.slug) payload.slug = slugify(payload.title, { lower: true, strict: true });
-      const item = await Model.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
+      let item = null;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        item = await Model.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: false });
+      }
+      if (!item) {
+        item = await Model.findOneAndUpdate(
+          {
+            $or: [
+              { slug: req.params.id },
+              ...(payload.title ? [{ title: payload.title }] : [])
+            ]
+          },
+          payload,
+          { new: true, runValidators: false, upsert: true }
+        );
+      }
       if (!item) throw new ApiError(404, `${label} not found`);
       return ApiResponse.ok(res, `${label} updated`, { item });
     } catch (error) {
@@ -82,8 +98,18 @@ export function update(Model, label, mapper = (req) => req.body) {
 export function remove(Model, label) {
   return async (req, res, next) => {
     try {
-      const item = await Model.findByIdAndDelete(req.params.id);
-      if (!item) throw new ApiError(404, `${label} not found`);
+      let item = null;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        item = await Model.findByIdAndDelete(req.params.id);
+      }
+      if (!item) {
+        item = await Model.findOneAndDelete({
+          $or: [
+            { slug: req.params.id },
+            { title: req.params.id }
+          ]
+        });
+      }
       return ApiResponse.ok(res, `${label} deleted`);
     } catch (error) {
       next(error);

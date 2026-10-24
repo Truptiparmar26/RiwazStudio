@@ -372,25 +372,30 @@ body.light .subhead {
 
   .section,
   .hero-3d-wrapper {
-    padding-top: 5.5rem !important;
-    padding-bottom: 3.5rem;
+    padding-top: clamp(4.5rem, 9vw, 5.5rem) !important;
+    padding-bottom: clamp(2.5rem, 6vw, 3.5rem) !important;
     overflow-x: hidden !important;
     width: 100% !important;
     max-width: 100% !important;
   }
 
-  .container,
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    box-sizing: border-box !important;
+  }
+
   .depth-layer,
   .hero-slider-3d {
     width: 100% !important;
     max-width: 100% !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
     overflow-x: hidden !important;
   }
 
   .headline {
-    font-size: clamp(1.65rem, 8.2vw, 2.5rem) !important;
+    font-size: clamp(1.65rem, 7.5vw, 2.45rem) !important;
     line-height: 1.15 !important;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -427,6 +432,16 @@ body.light .subhead {
   textarea,
   select {
     font-size: 16px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  .headline {
+    font-size: clamp(2.4rem, 5.2vw, 3.8rem) !important;
   }
 }
 

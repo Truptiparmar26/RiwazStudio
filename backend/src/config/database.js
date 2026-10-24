@@ -1,10 +1,17 @@
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Admin from '../models/Admin.js';
 import Gallery from '../models/Gallery.js';
 import Service from '../models/Service.js';
 import Blog from '../models/Blog.js';
 import Testimonial from '../models/Testimonial.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../../backend/.env') });
 
 export default async function connectDatabase() {
   if (mongoose.connection.readyState === 1) return;

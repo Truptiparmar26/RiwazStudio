@@ -88,7 +88,7 @@ const fallback = {
       title: "Tejas Patel",
       name: "Tejas Patel",
       role: "Founder & Wedding Photo Editor",
-      image: "/editor-portrait.jpg",
+      image: "/editor-portrait.webp",
       bio: "I'm Tejas, the founder and photo editor behind Riwaz Studio. With a passion for photography, creativity, and visual storytelling, I focus on turning raw captures into refined and meaningful visuals. My work includes wedding photo editing, cinematic color grading, natural retouching, portrait enhancement, and creative social media designs.\n\nAt Riwaz Studio, every photograph is carefully crafted with attention to detail, balanced colors, and a natural premium finish. I believe great editing should enhance the beauty already present in an image while keeping its emotion, character, and story intact.",
       personalStatement: "I believe great editing is not about changing a photograph completely — it is about bringing out the beauty that is already there.",
       quote: "Every photograph has a story.\nMy job is to make that story unforgettable.",
@@ -1021,7 +1021,13 @@ export default function Admin() {
 
   const activeRecords = records[active] || [];
   const editingRecord =
-    mode === "edit" ? activeRecords.find((item) => item.id === editId) : null;
+    mode === "edit"
+      ? activeRecords.find(
+          (item) =>
+            String(item.id) === String(editId) ||
+            String(item._id) === String(editId),
+        )
+      : null;
   const [draft, setDraft] = useState(null);
   const form = draft || editingRecord || blank[active] || {};
 
@@ -1136,7 +1142,7 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (token && !token.startsWith("demo.")) {
+    if (token) {
       syncFromBackend();
     }
   }, [token, active]);
@@ -1207,21 +1213,27 @@ export default function Admin() {
     );
     navigate(active === "settings" ? "/admin/settings" : `/admin/${active}`);
 
-    if (!token?.startsWith("demo.") && activeModule.endpoint) {
+    if (activeModule.endpoint) {
       try {
-        await fetch(
-          mode === "edit"
+        const url =
+          mode === "edit" && editId
             ? `${activeModule.endpoint}/${editId}`
-            : activeModule.endpoint,
-          {
-            method: mode === "edit" ? "PUT" : "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
+            : activeModule.endpoint;
+        const res = await fetch(url, {
+          method: mode === "edit" ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const serverDoc = json.data?.item || json.data;
+          if (serverDoc && (serverDoc._id || serverDoc.id)) {
+            upsertRecord(active, serverDoc, fallback[active]);
+          }
+        }
       } catch {
         // Local storage remains the live preview source.
       }
@@ -1232,9 +1244,10 @@ export default function Admin() {
     const next = deleteRecord(active, item.id, fallback[active]);
     refresh(active, next);
     setNotice(`${activeModule.label} deleted and removed from the website.`);
-    if (!token?.startsWith("demo.") && activeModule.endpoint && item.id) {
+    if (activeModule.endpoint && (item.id || item._id)) {
       try {
-        await fetch(`${activeModule.endpoint}/${item.id}`, {
+        const idToDelete = item._id || item.id;
+        await fetch(`${activeModule.endpoint}/${idToDelete}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -1250,9 +1263,10 @@ export default function Admin() {
       upsertRecord("messages", { ...item, status: "read" }, fallback.messages),
     );
     setNotice("Message marked as read! ✅");
-    if (!token?.startsWith("demo.") && item.id) {
+    if (item.id || item._id) {
       try {
-        await fetch(`/api/contact/${item.id}/read`, {
+        const msgId = item._id || item.id;
+        await fetch(`/api/contact/${msgId}/read`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` },
         });

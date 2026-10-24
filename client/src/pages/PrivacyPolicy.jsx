@@ -61,11 +61,18 @@ export default function PrivacyPolicy() {
     <div className="min-h-screen bg-[#05080e] text-white font-sans selection:bg-champagne/30 selection:text-white overflow-x-hidden">
       {/* Premium Standalone Header */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#05080e]/85 backdrop-blur-2xl shadow-sm shadow-black/50">
-        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <a href="/" className="group flex items-center gap-4 transition-all hover:opacity-90">
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-champagne/20 blur-md group-hover:bg-champagne/40 transition-colors" />
-              <img src="/logo.png" alt="Riwaz Studio Logo" className="relative h-11 w-11 rounded-full object-cover shadow-[0_0_15px_rgba(244,214,144,0.3)]" />
+              <img
+                src="/logo.webp"
+                alt="Riwaz Studio Logo"
+                width="44"
+                height="44"
+                className="relative h-11 w-11 rounded-full object-cover shadow-[0_0_15px_rgba(244,214,144,0.3)]"
+                onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
+              />
             </div>
             <span className="font-display text-xl font-bold tracking-wide text-white group-hover:text-champagne transition-colors">
               Riwaz Studio
@@ -86,7 +93,7 @@ export default function PrivacyPolicy() {
       <div className="pointer-events-none fixed top-0 left-1/4 h-[500px] w-[500px] rounded-full bg-champagne/5 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-champagne/5 blur-[120px]" />
 
-      <main className="container mx-auto px-6 pt-12 pb-4 md:pt-24 md:pb-8 max-w-7xl relative z-10">
+      <main className="container mx-auto px-4 sm:px-6 pt-12 pb-4 md:pt-24 md:pb-8 max-w-7xl relative z-10">
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
           
           {/* Left Sidebar: Table of Contents */}

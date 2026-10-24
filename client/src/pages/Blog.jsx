@@ -3,6 +3,7 @@ import { FiSearch } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import Reveal from '../components/Reveal.jsx';
 import { blogs } from '../data/content.js';
+import { getResponsiveImageProps } from '../utils/imageOptimizer.js';
 import { useApiCollection } from '../utils/siteStore.js';
 
 const categories = ['All', 'Photography Tips', 'Editing Tips', 'Lightroom', 'Photoshop', 'Color Grading', 'Wedding', 'Fashion'];
@@ -78,12 +79,28 @@ export default function Blog() {
         )}
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {filtered.map((post, index) => (
-            <Link key={post.id || post._id || `${post.title}-${index}`} to={`/blog/${post.slug || post.id || post._id}`} className="group block">
-              <article className="glass overflow-hidden rounded-[8px] transition duration-500 group-hover:border-champagne/40 group-hover:shadow-[0_0_30px_rgba(244,214,144,0.15)] h-full flex flex-col">
-                <div className="overflow-hidden bg-charcoal h-64 w-full">
-                  <img src={post.image || post.featuredImage || 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=750&q=76&fm=webp'} alt={post.title} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                </div>
+          {filtered.map((post, index) => {
+            const blogImgProps = getResponsiveImageProps(post.image || post.featuredImage || 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=750&q=76&fm=webp', {
+              widths: [360, 540, 750],
+              sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px',
+              quality: 75,
+              defaultWidth: 600
+            });
+            return (
+              <Link key={post.id || post._id || `${post.title}-${index}`} to={`/blog/${post.slug || post.id || post._id}`} className="group block">
+                <article className="glass overflow-hidden rounded-[8px] transition duration-500 group-hover:border-champagne/40 group-hover:shadow-[0_0_30px_rgba(244,214,144,0.15)] h-full flex flex-col">
+                  <div className="overflow-hidden bg-charcoal h-56 sm:h-64 w-full">
+                    <img
+                      src={blogImgProps.src}
+                      srcSet={blogImgProps.srcSet}
+                      sizes={blogImgProps.sizes}
+                      loading={blogImgProps.loading}
+                      fetchPriority={blogImgProps.fetchPriority}
+                      decoding={blogImgProps.decoding}
+                      alt={post.title}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                    />
+                  </div>
                 <div className="p-6 flex-1 flex flex-col justify-between">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-[.18em] text-champagne">{post.category || 'Editing'}</span>
@@ -97,7 +114,8 @@ export default function Blog() {
                 </div>
               </article>
             </Link>
-          ))}
+            );
+          })}
         </div>
         
         {filtered.length > 0 && (

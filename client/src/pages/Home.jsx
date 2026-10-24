@@ -1,12 +1,16 @@
 import { motion } from 'framer-motion';
+import { lazy, Suspense } from 'react';
 import { FiArrowDown, FiArrowRight, FiPlay } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import BeforeAfterSlider from '../components/BeforeAfterSlider.jsx';
-import HeroScene from '../components/HeroScene.jsx';
 import Reveal from '../components/Reveal.jsx';
 import ServiceCard from '../components/ServiceCard.jsx';
 import { blogs, gallery, heroTags, services, stats, testimonials } from '../data/content.js';
+import { getOptimizedImageUrl, getResponsiveImageProps } from '../utils/imageOptimizer.js';
 import { useApiCollection } from '../utils/siteStore.js';
+
+// Dynamically split 3D Three.js canvas so initial page load on mobile is instantaneous
+const HeroScene = lazy(() => import('../components/HeroScene.jsx'));
 
 export default function Home() {
   const { items: serviceItems } = useApiCollection('services', services, { onlyActive: true });
@@ -17,11 +21,13 @@ export default function Home() {
   return (
     <>
       <section className="relative grid min-h-screen place-items-center overflow-hidden px-4 pt-28 hero-3d-wrapper">
-        <HeroScene />
+        <Suspense fallback={null}>
+          <HeroScene />
+        </Suspense>
         <div className="container relative z-10 grid items-end gap-10 lg:grid-cols-[1.05fr_.95fr] depth-layer">
           <div>
             <motion.p className="eyebrow" initial={{ opacity: 0, y: 12, filter: 'blur(10px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>Riwaz Studio</motion.p>
-            <motion.h1 className="headline mt-5 max-w-5xl headline-3d-glow leading-[1.08] !text-[clamp(2.2rem,5.2vw,4.6rem)]" initial={{ opacity: 0, y: 30, rotateX: 15, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }} transition={{ delay: 0.12, duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
+            <motion.h1 className="headline mt-5 max-w-5xl headline-3d-glow leading-[1.08] !text-[clamp(1.75rem,7vw,4.6rem)] sm:!text-[clamp(2.2rem,5.2vw,4.6rem)]" initial={{ opacity: 0, y: 30, rotateX: 15, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }} transition={{ delay: 0.12, duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}>
               Premium Wedding Photo Editing Turning Raw Moments Into Timeless Memories.
             </motion.h1>
             <motion.div className="mt-7 flex flex-wrap gap-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.8 }}>
@@ -38,8 +44,8 @@ export default function Home() {
               </Link>
             </motion.div>
           </div>
-          <div className="glass mb-10 rounded-[8px] p-4 hero-slider-3d floating pulse-glow">
-            <BeforeAfterSlider />
+          <div className="glass mb-10 rounded-[8px] p-3 sm:p-4 hero-slider-3d floating pulse-glow">
+            <BeforeAfterSlider priority={true} />
           </div>
         </div>
         <motion.a href="#story" className="scroll-indicator absolute bottom-7 left-1/2 grid place-items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-white/55" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.8 }}>
@@ -51,15 +57,15 @@ export default function Home() {
         <div className="container grid gap-10 lg:grid-cols-[.9fr_1.1fr]">
           <Reveal>
             <p className="eyebrow">Studio Story</p>
-            <h2 className="mt-4 font-display text-5xl leading-tight md:text-6xl">Where every image becomes a timeless visual story.</h2>
+            <h2 className="mt-4 font-display text-3xl sm:text-5xl leading-tight md:text-6xl">Where every image becomes a timeless visual story.</h2>
           </Reveal>
           <Reveal delay={0.08}>
             <p className="subhead">Riwaz Studio partners with photographers, studios, creators, and brands to transform raw captures into polished visual stories. Every image is carefully crafted with professional color grading, natural retouching, detailed corrections, and precise finishing — delivering visuals that are clean, consistent, and ready to impress.</p>
             <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
               {stats.map((stat, i) => (
-                <motion.div key={stat.label} className="glass rounded-[8px] p-5 glass-3d stat-3d premium-glow shimmer-border" initial={{ opacity: 0, y: 35, rotateX: -12, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-60px' }} transition={{ delay: i * 0.1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
-                  <strong className="block font-display text-3xl text-champagne">{stat.value}</strong>
-                  <span className="mt-2 block text-xs font-bold uppercase tracking-[.14em] text-white/52">{stat.label}</span>
+                <motion.div key={stat.label} className="glass rounded-[8px] p-4 sm:p-5 glass-3d stat-3d premium-glow shimmer-border" initial={{ opacity: 0, y: 35, rotateX: -12, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-60px' }} transition={{ delay: i * 0.1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}>
+                  <strong className="block font-display text-2xl sm:text-3xl text-champagne">{stat.value}</strong>
+                  <span className="mt-2 block text-[11px] sm:text-xs font-bold uppercase tracking-[.14em] text-white/52">{stat.label}</span>
                 </motion.div>
               ))}
             </div>
@@ -72,7 +78,7 @@ export default function Home() {
           <Reveal className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <p className="eyebrow">Services</p>
-              <h2 className="mt-4 font-display text-5xl">Premium editing suites</h2>
+              <h2 className="mt-4 font-display text-3xl sm:text-5xl">Premium editing suites</h2>
             </div>
             <Link to="/services" className="font-bold text-champagne">View all services</Link>
           </Reveal>
@@ -90,7 +96,7 @@ export default function Home() {
         <div className="container">
           <Reveal>
             <p className="eyebrow">3D Gallery</p>
-            <h2 className="mt-4 font-display text-4xl sm:text-5xl font-extrabold tracking-tight text-white headline-3d-glow max-w-4xl leading-[1.14]">
+            <h2 className="mt-4 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white headline-3d-glow max-w-4xl leading-[1.14]">
               Where Every Image <br className="hidden sm:inline" />
               Becomes a Timeless Story.
             </h2>
@@ -98,22 +104,40 @@ export default function Home() {
               A curated collection of photo edits, retouching, color grading, and creative visual work by Riwaz Studio.
             </p>
           </Reveal>
-          <div className="mt-10 grid auto-rows-[220px] gap-4 md:grid-cols-4">
-            {galleryItems.slice(0, 8).map((item, index) => (
-              <motion.div
-                key={item.id || item.title}
-                className={`group relative overflow-hidden rounded-[8px] luxury-border gallery-3d premium-glow shimmer-border ${index === 0 || index === 5 ? 'md:col-span-2 md:row-span-2' : ''}`}
-                initial={{ opacity: 0, scale: 0.88, rotateX: 12, y: 20 }}
-                whileInView={{ opacity: 1, scale: 1, rotateX: 0, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: index * 0.08, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
-                whileHover={{ scale: 0.985 }}
-              >
-                <img src={item.image || item.url} alt={item.title} loading="lazy" className="image-protect h-full w-full object-cover transition duration-700 group-hover:scale-110" onContextMenu={(event) => event.preventDefault()} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent opacity-90" />
-                <span className="absolute bottom-4 left-4 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] backdrop-blur">{item.category}</span>
-              </motion.div>
-            ))}
+          <div className="mt-10 grid auto-rows-[200px] sm:auto-rows-[220px] gap-4 md:grid-cols-4">
+            {galleryItems.slice(0, 8).map((item, index) => {
+              const imgProps = getResponsiveImageProps(item.image || item.url, {
+                widths: [360, 540, 750],
+                sizes: index === 0 || index === 5 ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 100vw, 25vw',
+                quality: 75,
+                defaultWidth: 600
+              });
+              return (
+                <motion.div
+                  key={item.id || item.title}
+                  className={`group relative overflow-hidden rounded-[8px] luxury-border gallery-3d premium-glow shimmer-border ${index === 0 || index === 5 ? 'md:col-span-2 md:row-span-2' : ''}`}
+                  initial={{ opacity: 0, scale: 0.88, rotateX: 12, y: 20 }}
+                  whileInView={{ opacity: 1, scale: 1, rotateX: 0, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ delay: index * 0.08, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  whileHover={{ scale: 0.985 }}
+                >
+                  <img
+                    src={imgProps.src}
+                    srcSet={imgProps.srcSet}
+                    sizes={imgProps.sizes}
+                    loading={imgProps.loading}
+                    fetchPriority={imgProps.fetchPriority}
+                    decoding={imgProps.decoding}
+                    alt={item.title}
+                    className="image-protect h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                    onContextMenu={(event) => event.preventDefault()}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent opacity-90" />
+                  <span className="absolute bottom-4 left-4 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[.16em] backdrop-blur">{item.category}</span>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -121,7 +145,8 @@ export default function Home() {
       <section className="section bg-white/[.025] section-3d">
         <div className="container grid gap-6 lg:grid-cols-3">
           {testimonialItems.slice(0, 3).map((item, i) => {
-            const avatar = item.profileImage || item.image;
+            const rawAvatar = item.profileImage || item.image;
+            const avatar = rawAvatar ? getOptimizedImageUrl(rawAvatar, 120, 80) : null;
             const name = item.clientName || item.name || item.title || 'Client';
             const role = item.designation || item.role || item.profession || 'Partner';
             const comment = item.message || item.quote || item.review || 'Exceptional craftsmanship and service.';
@@ -129,15 +154,15 @@ export default function Home() {
               <motion.div key={item.id || name || i} className="glass rounded-[8px] p-6 glass-3d testimonial-3d premium-glow shimmer-border flex flex-col justify-between" initial={{ opacity: 0, y: 50, rotateY: i % 2 ? 10 : -10, scale: 0.95 }} whileInView={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.13, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
                 <div>
                   <div className="text-champagne">{'★'.repeat(Number(item.rating || 5))}</div>
-                  <p className="mt-5 text-lg leading-8 text-white/78">"{comment}"</p>
+                  <p className="mt-5 text-base sm:text-lg leading-7 sm:leading-8 text-white/78">"{comment}"</p>
                 </div>
                 <div className="mt-6 flex items-center gap-4">
                   {avatar && (
-                    <img src={avatar} alt={name} className="h-11 w-11 rounded-full object-cover border border-champagne/30" />
+                    <img src={avatar} alt={name} loading="lazy" decoding="async" className="h-11 w-11 rounded-full object-cover border border-champagne/30" />
                   )}
                   <div>
-                    <strong className="block text-white">{name}</strong>
-                    <span className="block text-sm text-white/48">{role}</span>
+                    <strong className="block text-white text-sm sm:text-base">{name}</strong>
+                    <span className="block text-xs sm:text-sm text-white/48">{role}</span>
                   </div>
                 </div>
               </motion.div>
@@ -151,26 +176,43 @@ export default function Home() {
           <Reveal className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <p className="eyebrow">Journal</p>
-              <h2 className="mt-4 font-display text-5xl">Editing insights</h2>
+              <h2 className="mt-4 font-display text-3xl sm:text-5xl">Editing insights</h2>
             </div>
             <Link to="/blog" className="font-bold text-champagne">Read blog</Link>
           </Reveal>
           <div className="grid gap-5 md:grid-cols-3">
-            {blogItems.slice(0, 3).map((post, i) => (
-              <motion.article key={post.id || post.title} className="glass overflow-hidden rounded-[8px] blog-3d glass-3d premium-glow shimmer-border h-full flex flex-col" initial={{ opacity: 0, y: 60, rotateX: -10, scale: 0.94 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.12, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
-                <Link to={`/blog/${post.slug || post.id || post._id}`} className="group block flex-1 flex flex-col">
-                  <div className="overflow-hidden h-56 w-full">
-                    <img src={post.image || post.featuredImage} alt={post.title} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <span className="text-xs font-bold uppercase tracking-[.18em] text-champagne">{post.category}</span>
-                      <h3 className="mt-3 font-display text-2xl group-hover:text-champagne transition duration-300">{post.title}</h3>
+            {blogItems.slice(0, 3).map((post, i) => {
+              const blogImgProps = getResponsiveImageProps(post.image || post.featuredImage, {
+                widths: [360, 540, 750],
+                sizes: '(max-width: 768px) 100vw, 33vw',
+                quality: 75,
+                defaultWidth: 600
+              });
+              return (
+                <motion.article key={post.id || post.title} className="glass overflow-hidden rounded-[8px] blog-3d glass-3d premium-glow shimmer-border h-full flex flex-col" initial={{ opacity: 0, y: 60, rotateX: -10, scale: 0.94 }} whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: i * 0.12, duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}>
+                  <Link to={`/blog/${post.slug || post.id || post._id}`} className="group block flex-1 flex flex-col">
+                    <div className="overflow-hidden h-48 sm:h-56 w-full">
+                      <img
+                        src={blogImgProps.src}
+                        srcSet={blogImgProps.srcSet}
+                        sizes={blogImgProps.sizes}
+                        loading={blogImgProps.loading}
+                        fetchPriority={blogImgProps.fetchPriority}
+                        decoding={blogImgProps.decoding}
+                        alt={post.title}
+                        className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      />
                     </div>
-                  </div>
-                </Link>
-              </motion.article>
-            ))}
+                    <div className="p-5 flex-1 flex flex-col justify-between">
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-[.18em] text-champagne">{post.category}</span>
+                        <h3 className="mt-3 font-display text-xl sm:text-2xl group-hover:text-champagne transition duration-300">{post.title}</h3>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.article>
+              );
+            })}
           </div>
         </div>
       </section>

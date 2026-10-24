@@ -93,12 +93,12 @@ export default function Footer() {
                 placeholder="Enter your email..."
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="min-w-0 flex-1 bg-transparent px-4 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent px-3 sm:px-4 py-2 text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={subscribed}
-                className="rounded-full bg-champagne px-6 py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider text-black transition-all duration-300 hover:bg-white hover:shadow-[0_0_20px_#f4d690] active:scale-95 shrink-0"
+                className="rounded-full bg-champagne px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-wider text-black transition-all duration-300 hover:bg-white hover:shadow-[0_0_20px_#f4d690] active:scale-95 shrink-0"
               >
                 {subscribed ? (
                   <span className="flex items-center gap-1.5">
@@ -161,9 +161,9 @@ export default function Footer() {
         </div>
 
         {/* Copyright Bar */}
-        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-white/50">
+        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-white/50 text-center sm:text-left">
           <p>© {new Date().getFullYear()} Riwaz Studio. Crafted with precision for high-end luxury storytelling.</p>
-          <div className="flex gap-6 z-10 relative">
+          <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6 z-10 relative">
             <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-champagne transition cursor-pointer">
               Privacy Policy
             </Link>

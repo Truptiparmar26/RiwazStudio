@@ -1,25 +1,35 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import Lenis from 'lenis';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import CursorGlow from './components/CursorGlow.jsx';
 import Footer from './components/Footer.jsx';
 import Navbar from './components/Navbar.jsx';
 import Preloader from './components/Preloader.jsx';
 import WhatsAppButton from './components/WhatsAppButton.jsx';
-import About from './pages/About.jsx';
-import Admin from './pages/Admin.jsx';
-import BeforeAfterPage from './pages/BeforeAfterPage.jsx';
-import Blog from './pages/Blog.jsx';
-import BlogDetail from './pages/BlogDetail.jsx';
-import Contact from './pages/Contact.jsx';
-import Gallery from './pages/Gallery.jsx';
 import Home from './pages/Home.jsx';
-import NotFound from './pages/NotFound.jsx';
-import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
-import Services from './pages/Services.jsx';
-import TermsAndConditions from './pages/TermsAndConditions.jsx';
-import Testimonials from './pages/Testimonials.jsx';
+
+// Route-level code splitting for optimized mobile speed and minimal initial bundle size
+const About = lazy(() => import('./pages/About.jsx'));
+const Admin = lazy(() => import('./pages/Admin.jsx'));
+const BeforeAfterPage = lazy(() => import('./pages/BeforeAfterPage.jsx'));
+const Blog = lazy(() => import('./pages/Blog.jsx'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail.jsx'));
+const Contact = lazy(() => import('./pages/Contact.jsx'));
+const Gallery = lazy(() => import('./pages/Gallery.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy.jsx'));
+const Services = lazy(() => import('./pages/Services.jsx'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions.jsx'));
+const Testimonials = lazy(() => import('./pages/Testimonials.jsx'));
+
+function RouteFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="h-9 w-9 rounded-full border-2 border-champagne border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   const location = useLocation();
@@ -61,9 +71,11 @@ export default function App() {
       {showLayout && <CursorGlow />}
       {showLayout && <Navbar />}
       {isAdminRoute ? (
-        <Routes location={location}>
-          <Route path="/admin/*" element={<Admin />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes location={location}>
+            <Route path="/admin/*" element={<Admin />} />
+          </Routes>
+        </Suspense>
       ) : (
         <AnimatePresence mode="wait">
           <motion.main
@@ -73,20 +85,22 @@ export default function App() {
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
           >
-            <Routes location={location}>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/before-after" element={<BeforeAfterPage />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogDetail />} />
-              <Route path="/testimonials" element={<Testimonials />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes location={location}>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/gallery" element={<Gallery />} />
+                <Route path="/before-after" element={<BeforeAfterPage />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogDetail />} />
+                <Route path="/testimonials" element={<Testimonials />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </motion.main>
         </AnimatePresence>
       )}

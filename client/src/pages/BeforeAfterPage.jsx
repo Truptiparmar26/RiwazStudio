@@ -72,9 +72,13 @@ const showcases = [
   }
 ];
 
+import { useApiCollection } from '../utils/siteStore.js';
+
 export default function BeforeAfterPage() {
+  const { items: showcaseItems } = useApiCollection('beforeAfter', showcases);
+  const items = showcaseItems && showcaseItems.length > 0 ? showcaseItems : showcases;
   const [activeTab, setActiveTab] = useState('wedding');
-  const currentShowcase = showcases.find((item) => item.id === activeTab) || showcases[0];
+  const currentShowcase = items.find((item) => String(item.id) === String(activeTab)) || items[0] || showcases[0];
 
   return (
     <>
@@ -103,13 +107,13 @@ export default function BeforeAfterPage() {
           {/* Interactive Category Tabs */}
           <Reveal delay={0.15} className="mt-10">
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
-              {showcases.map((tab) => {
-                const isActive = activeTab === tab.id;
+              {items.map((tab) => {
+                const isActive = String(activeTab) === String(tab.id);
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`group relative shrink-0 rounded-full px-6 py-2.5 sm:px-7 sm:py-3 text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 border ${
+                    className={`group relative shrink-0 rounded-full px-4 py-2 sm:px-7 sm:py-3 text-xs sm:text-sm font-bold tracking-wide transition-all duration-300 border ${
                       isActive
                         ? 'border-champagne bg-champagne text-ink shadow-[0_0_25px_rgba(244,214,144,0.5)] font-extrabold scale-[1.02]'
                         : 'border-champagne/60 bg-black/40 text-white hover:border-champagne hover:text-champagne hover:bg-champagne/10 shadow-sm'
@@ -148,13 +152,14 @@ export default function BeforeAfterPage() {
                       after={currentShowcase.after}
                       beforeLabel={currentShowcase.beforeLabel}
                       afterLabel={currentShowcase.afterLabel}
-                      aspectClassName="aspect-[3/4] sm:aspect-[4/5] min-h-[420px] sm:min-h-[500px]"
+                      priority={true}
+                      aspectClassName="aspect-[3/4] sm:aspect-[4/5] min-h-[280px] sm:min-h-[420px] md:min-h-[500px]"
                     />
                   </div>
                 </div>
 
                 {/* Right: Technical Details Panel matching screenshot */}
-                <div className="rounded-[12px] border border-white/20 bg-black/40 p-6 sm:p-9 flex flex-col justify-between shadow-2xl backdrop-blur-md">
+                <div className="rounded-[12px] border border-white/20 bg-black/40 p-5 sm:p-9 flex flex-col justify-between shadow-2xl backdrop-blur-md">
                   <div>
                     <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
                       {currentShowcase.title}

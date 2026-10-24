@@ -101,7 +101,14 @@ export default function Navbar() {
           onClick={() => setOpen(false)}
           className="group flex shrink-0 items-center gap-3.5 transition-all duration-300 hover:scale-[1.02] hover:opacity-95"
         >
-          <img src="/logo.png" alt="RS" className="h-11 w-11 rounded-full object-cover shadow-[0_0_20px_rgba(244,214,144,0.4)] transition duration-500 group-hover:scale-105 group-hover:shadow-[0_0_30px_rgba(244,214,144,0.7)]" />
+          <img
+            src="/logo.webp"
+            alt="RS"
+            width="44"
+            height="44"
+            className="h-11 w-11 rounded-full object-cover shadow-[0_0_20px_rgba(244,214,144,0.4)] transition duration-500 group-hover:scale-105 group-hover:shadow-[0_0_30px_rgba(244,214,144,0.7)]"
+            onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
+          />
           <span>
             <span className="block font-display text-xl font-bold leading-none tracking-tight text-white transition group-hover:text-champagne">
               Riwaz Studio
@@ -137,7 +144,7 @@ export default function Navbar() {
         <AnimatePresence>
           {open && (
             <motion.div
-              className="fixed inset-0 z-[999] bg-[#05080e] p-6 lg:hidden flex flex-col justify-between pointer-events-auto w-screen h-screen overflow-hidden shadow-[0_0_100px_rgba(0,0,0,1)]"
+              className="fixed inset-0 z-[999] bg-[#05080e] p-5 sm:p-6 lg:hidden flex flex-col justify-between pointer-events-auto w-full h-[100dvh] max-h-[100dvh] overflow-y-auto shadow-[0_0_100px_rgba(0,0,0,1)]"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
@@ -153,7 +160,14 @@ export default function Navbar() {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3"
                 >
-                  <img src="/logo.png" alt="RS" className="h-10 w-10 rounded-full object-cover shadow-[0_0_15px_rgba(244,214,144,0.45)]" />
+                  <img
+                    src="/logo.webp"
+                    alt="RS"
+                    width="40"
+                    height="40"
+                    className="h-10 w-10 rounded-full object-cover shadow-[0_0_15px_rgba(244,214,144,0.45)]"
+                    onError={(e) => { e.target.onerror = null; e.target.src = '/logo.png'; }}
+                  />
                   <span className="font-display text-2xl font-extrabold text-white">
                     Riwaz <span className="text-champagne">Studio</span>
                   </span>
